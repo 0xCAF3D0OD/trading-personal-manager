@@ -66,12 +66,14 @@ Le module de surveillance suit des tokens que vous avez choisis. Le scanner fait
 
 Le cadrage complet, avec le schéma de données, les formules de chaque filtre et la justification de chaque seuil, est dans [docs/03-scanner-schema-et-pipeline.md](docs/03-scanner-schema-et-pipeline.md). Le code viendra après validation.
 
-### Le panneau de métriques et la veille sur les annonces (version suivante, en cadrage)
+### La veille sur les annonces (livrée) et le panneau de métriques (à suivre)
 
 Deux compléments à la vue détaillée d'un token :
 
 - **Le panneau de métriques** affine ce qui existe : quand deux sources donnent un prix différent, l'écart est affiché et signalé au-delà de 2 % ; la capitalisation est montrée trois fois (celle de la source, celle recalculée depuis la blockchain, la valeur totalement diluée) avec l'écart entre elles ; la liquidité est rapportée à la capitalisation et traduite en slippage concret pour trois tailles d'ordre, autrement dit combien vous perdriez en sortant ; les variations sur 5 minutes, 1 heure, 6 heures et 24 heures sont lues ensemble pour dire si le mouvement s'éteint ou s'accélère. Une alerte prioritaire se déclenche quand la liquidité baisse alors que le prix ne bouge pas : c'est le signal qui précède le plus souvent les chutes brutales.
 - **La veille** n'est ni un fil d'actualités ni une mesure de sentiment. C'est un journal horodaté de ce que l'équipe a affirmé, en texte brut jamais reformulé, avec pour chaque affirmation un statut : en attente, tenue, contredite, expirée. Le cœur du module prend une photo du site officiel toutes les 6 heures et compare : si un chiffre de tokenomics change sans qu'aucune annonce ne l'accompagne, vous êtes prévenu. Une frise met face à face ce qui a été dit et ce que les wallets de l'équipe ont réellement fait sur la blockchain. Le contenu promotionnel payé est mis à part et dévalué visuellement.
+
+La veille est accessible depuis la vue détaillée d'un token, bouton « Veille ». Huit onglets : engagements, changements détectés, dire vs faire, actualités, signaux de promotion, sources, wallets équipe, réglages. Pour une page rendue par JavaScript, l'application propose de surveiller directement l'appel JSON que fait la page, ou un rendu par navigateur dans un conteneur séparé.
 
 Le cadrage complet est dans [docs/04-metriques-marche-et-veille.md](docs/04-metriques-marche-et-veille.md).
 
@@ -100,7 +102,7 @@ Les premiers signaux de divergence apparaissent après deux ou trois jours de re
 |---|---|---|
 | **0.1.0 — Surveillance** | Livrée le 13 septembre 2026 | Liste de surveillance, vue détaillée en quatre blocs, détection de divergences, journal de discipline immuable, alertes ntfy / Telegram / Discord, vue Système, sources gratuites en priorité avec Solscan en repli, Docker. Cadrage : [docs/01](docs/01-architecture-proposee.md), [docs/02](docs/02-matrice-des-sources.md). |
 | **0.2.0 — Scanner** | Cadrage écrit, en attente de validation | Découverte des nouveaux pools Solana via GeckoTerminal, pipeline de filtrage en cinq étages, drapeaux explicites, onglet des exclus avec motif, réglages éditables, suivi rétrospectif J+1 / J+7 / J+30 avec médiane, alerte rare « zéro drapeau ». Cadrage : [docs/03](docs/03-scanner-schema-et-pipeline.md). |
-| **0.3.0 — Métriques de marché et veille** | Cadrage écrit, en attente de validation | Panneau de métriques affiné (écart entre sources, état de dérivée, capitalisation source / recalculée / FDV, ratio liquidité / capitalisation avec slippage estimé, volume par source, trois divergences de plus, alerte retrait de liquidité) et encadré de veille (snapshots du site avec diff automatique, journal d'engagements en texte brut, frise « dire vs faire », actualités tierces séparées et signaux de promotion). Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md). |
+| **0.3.0 — Veille sur les annonces** | Livrée le 13 septembre 2026 (partie métriques de marché à suivre en 0.3.1) | Panneau de métriques affiné (écart entre sources, état de dérivée, capitalisation source / recalculée / FDV, ratio liquidité / capitalisation avec slippage estimé, volume par source, trois divergences de plus, alerte retrait de liquidité) et encadré de veille (snapshots du site avec diff automatique, journal d'engagements en texte brut, frise « dire vs faire », actualités tierces séparées et signaux de promotion). Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md). |
 | **0.4.0 — Portefeuille** | Prévue | Valeur du portefeuille Kraken en lecture seule (permission de consultation des soldes uniquement), avec la source de chaque prix. Aucune route d'ordre. |
 | Non planifié | — | Web Push (ntfy couvre le besoin), indicateurs techniques (exclus par principe), multi-utilisateurs (hors périmètre). |
 
@@ -188,6 +190,8 @@ La réponse indique le palier détecté (A, B ou C) et, pour chaque donnée, la 
 npm test
 ```
 
+Quarante-six tests : immuabilité des plans et des engagements, règles de divergence, moteur de diff (normalisation, appariement, lignes volatiles, robots.txt, JSON), pipeline de veille complet sur un site local, vérification automatique des engagements, réglages versionnés.
+
 ---
 
 ## Paliers de configuration
@@ -223,6 +227,11 @@ npm test
 | `DISCORD_WEBHOOK_URL` | vide | Canal Discord |
 | `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW` | `120`, `1 minute` | Limite globale des routes internes |
 | `RATE_LIMIT_EXPENSIVE_MAX` | `10` | Limite par minute sur les routes qui peuvent déclencher un appel externe (ajout, rafraîchissements forcés, test de notification) |
+| `RENDERER_URL` | vide | URL du service de rendu sans tête (`http://renderer:3100` avec docker-compose). Vide : découverte des API JSON et mode rendu sans tête indisponibles, modes HTML et API JSON conservés. |
+| `WATCH_USER_AGENT_CONTACT` | vide | Contact inséré dans le User-Agent des snapshots de sites |
+| `CRYPTOPANIC_API_KEY` | vide | Optionnel, agrégateur d'actualités |
+| `GITHUB_TOKEN` | vide | Optionnel, quota API GitHub |
+| `X_BEARER_TOKEN` | vide | Optionnel, API X v2 payante. Sans elle : import d'un post par oEmbed officiel + saisie assistée |
 | `VITE_API_BASE` | `/api` | Seule variable frontend. **Tout `VITE_*` est public** : n'y mettez jamais de secret. Le backend refuse de démarrer si `VITE_SOLSCAN_API_KEY` ou `VITE_HELIUS_API_KEY` est défini. |
 
 ---
@@ -238,6 +247,9 @@ npm test
 | Activités du créateur | 1 h | Helius Enhanced, sinon Solscan |
 | LP lock | 24 h | RugCheck |
 | Créateur, date de création | 1 an | RPC (Metaplex), Solscan en repli |
+| Snapshots de pages (veille) | 6 h par source, en-têtes conditionnels | Site officiel, HTML / API JSON / rendu sans tête |
+| Actualités (veille) | 1 h | RSS Google News, CryptoPanic, flux d'exchanges |
+| Actions on-chain équipe (veille) | 15 min | Helius Enhanced Transactions |
 
 Le cache est en mémoire et recopié dans la table `cache_entries` : un redémarrage ne rebrûle aucun quota. Le polling frontend (TanStack Query, `staleTime` aligné sur ces TTL) n'interroge que le backend.
 
@@ -248,6 +260,7 @@ Le cache est en mémoire et recopié dans la table `cache_entries` : un redémar
 ```
 apps/api          Backend Fastify : config, db (migrations SQL, repositories), cache, datasources, services, jobs, routes
 apps/web          Frontend Vue 3 : api, queries, stores, views, components, composables
+apps/renderer     Service de rendu sans tête (Playwright, Chromium) pour la veille, conteneur séparé
 packages/shared   Schémas Zod, types, règles de divergence, validation d'adresse
 docs              Cadrage et matrice des sources
 data              Volume SQLite (gitignoré)

@@ -59,6 +59,37 @@ export class AlertService {
     return this.hub.broadcast({ title: 'Test — surveillance Solana', message: 'Le canal fonctionne. Les alertes arriveront ici.', priority: 'low', tags: ['white_check_mark'] });
   }
 
+  /**
+   * Alerte événementielle (veille, on-chain) : pas de polling, le service appelant a déjà constaté le fait.
+   * Une règle par token et par type est créée à la volée ; le silence est respecté sauf si `dedupeKey` désigne
+   * un fait nouveau (par exemple l'identifiant d'un changement de page), auquel cas l'alerte part quand même.
+   */
+  async fireEvent(input: {
+    tokenId: number; type: AlertType; ruleText: string; observed?: number | null; threshold?: number | null;
+    payload?: unknown; priority?: 'low' | 'default' | 'high' | 'urgent'; cooldownS?: number; dedupeKey?: string;
+  }): Promise<{ fired: boolean; reason?: string }> {
+    let row = this.ctx.alerts.list(input.tokenId).find((a) => a.type === input.type);
+    if (!row) row = this.ctx.alerts.insert({ tokenId: input.tokenId, type: input.type, threshold: null, planId: null, cooldownS: input.cooldownS ?? 6 * 3600 });
+    if (row.enabled !== 1) return { fired: false, reason: 'désactivée' };
+    const now = nowS();
+    const inCooldown = !!row.last_fired_at && now - row.last_fired_at < row.cooldown_s;
+    if (inCooldown && !input.dedupeKey) return { fired: false, reason: 'silence' };
+    if (input.dedupeKey) {
+      const recent = this.ctx.alerts.events(50, input.tokenId).find((e) => e.alertId === row!.id && (e.payload as { dedupeKey?: string } | null)?.dedupeKey === input.dedupeKey);
+      if (recent) return { fired: false, reason: 'déjà envoyée' };
+    }
+    const token = this.ctx.tokens.byId(input.tokenId);
+    const symbol = token?.symbol ?? token?.address.slice(0, 6) ?? '?';
+    const payload = { ...(typeof input.payload === 'object' && input.payload ? input.payload : {}), dedupeKey: input.dedupeKey ?? null };
+    const deliveries = await this.hub.broadcast({
+      title: `${symbol} — ${labelOf(input.type)}`, message: input.ruleText, priority: input.priority ?? 'default', tags: [tagOf(input.type)],
+    });
+    this.ctx.alerts.insertEvent({ alertId: row.id, firedAt: now, observed: input.observed ?? null, threshold: input.threshold ?? null, ruleText: input.ruleText, payload, deliveredTo: deliveries });
+    this.ctx.alerts.markFired(row.id, now);
+    this.ctx.log.info({ alertId: row.id, type: input.type, token: symbol }, 'Alerte événementielle déclenchée');
+    return { fired: true };
+  }
+
   /** Job : évalue toutes les alertes actives hors période de silence. */
   async evaluateAll(): Promise<{ evaluated: number; fired: number }> {
     const now = nowS();
@@ -175,11 +206,16 @@ function labelOf(t: AlertType): string {
     div_distribution: 'Divergence : distribution', div_avg_position: 'Divergence : position moyenne',
     div_concentration_down_price_up: 'Divergence : concentration vs prix', div_burn_slowdown: 'Divergence : burn qui ralentit',
     mint_authority_changed: 'Autorité de mint modifiée', freeze_authority_changed: 'Autorité de freeze modifiée',
+    watch_tokenomics_change: 'Tokenomics modifiées sur le site', watch_content_change: 'Contenu du site modifié',
+    watch_unannounced_change: 'Modifié sans communication', watch_claim_contradicted: 'Engagement contredit',
+    watch_claim_due: 'Engagement arrivé à échéance', team_transfer_to_exchange: 'Transfert équipe vers un exchange',
+    team_lp_remove: 'Retrait de liquidité par l’équipe', team_sell: 'Vente par l’équipe',
   };
   return m[t];
 }
 function tagOf(t: AlertType): string {
-  if (t === 'plan_sl' || t.endsWith('_changed')) return 'rotating_light';
+  if (t === 'plan_sl' || t.endsWith('_changed') || t === 'watch_tokenomics_change' || t === 'watch_unannounced_change' || t.startsWith('team_')) return 'rotating_light';
+  if (t.startsWith('watch_')) return 'mag';
   if (t === 'plan_tp') return 'moneybag';
   if (t.startsWith('div_')) return 'warning';
   return 'bell';

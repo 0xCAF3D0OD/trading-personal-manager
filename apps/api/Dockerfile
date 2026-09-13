@@ -21,6 +21,7 @@ COPY --from=build /app/packages/shared/dist ./packages/shared/dist
 COPY --from=build /app/apps/api/package.json ./apps/api/
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/src/db/migrations ./apps/api/dist/db/migrations
+COPY --from=build /app/apps/api/src/seed ./apps/api/dist/seed
 RUN mkdir -p /app/data && chown -R node:node /app
 USER node
 EXPOSE 3000

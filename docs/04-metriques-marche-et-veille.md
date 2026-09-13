@@ -1,6 +1,6 @@
 # Panneau de métriques de marché et encadré de veille — schéma de données et moteur de diff
 
-> Document de cadrage à valider **avant** le code d'interface. Version 0.2 — 2026-09-13.
+> Document de cadrage. Version 0.3 — 2026-09-13. **Partie B (veille) implémentée** le 13 septembre 2026 avec les propositions par défaut de la partie D ; partie A (métriques de marché) à suivre.
 > S'appuie sur la base existante (`market_snapshots`, `holder_snapshots`, `alerts`, règles de divergence partagées).
 
 ## Journal des décisions

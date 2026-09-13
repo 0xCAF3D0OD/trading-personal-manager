@@ -52,7 +52,10 @@ async function refreshHealth() {
           <div class="faint small">{{ t.program === 'token-2022' ? 'Token-2022' : 'SPL Token' }} · {{ t.decimals }} décimales · créé {{ t.createdAt ? fmtDate(t.createdAt, false) : 'date inconnue' }} · suivi depuis {{ fmtDate(t.addedAt, false) }}</div>
         </div>
         <div class="stack" style="align-items:flex-end">
-          <router-link :to="`/token/${t.id}/journal`"><button class="primary">Journal de discipline</button></router-link>
+          <div class="row">
+            <router-link :to="`/token/${t.id}/veille`"><button>Veille</button></router-link>
+            <router-link :to="`/token/${t.id}/journal`"><button class="primary">Journal de discipline</button></router-link>
+          </div>
           <span v-if="currentPlan" class="small muted">Plan v{{ currentPlan.version }} · stop {{ currentPlan.stopLossPrice }} · objectif {{ currentPlan.takeProfitPrice }}</span>
           <span v-else class="small down">Aucun plan enregistré</span>
         </div>

@@ -42,6 +42,12 @@ const EnvSchema = z.object({
   TELEGRAM_CHAT_ID: optionalString,
   DISCORD_WEBHOOK_URL: optionalString,
 
+  RENDERER_URL: optionalString,
+  WATCH_USER_AGENT_CONTACT: optionalString,
+  CRYPTOPANIC_API_KEY: optionalString,
+  GITHUB_TOKEN: optionalString,
+  X_BEARER_TOKEN: optionalString,
+
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
   RATE_LIMIT_WINDOW: z.string().default('1 minute'),
   RATE_LIMIT_EXPENSIVE_MAX: z.coerce.number().int().positive().default(10),
@@ -68,7 +74,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
       heliusApiKey = undefined;
     }
   }
-  for (const k of ['SOLSCAN_API_KEY', 'HELIUS_API_KEY', 'TELEGRAM_BOT_TOKEN', 'NTFY_TOKEN']) {
+  for (const k of ['SOLSCAN_API_KEY', 'HELIUS_API_KEY', 'TELEGRAM_BOT_TOKEN', 'NTFY_TOKEN', 'CRYPTOPANIC_API_KEY', 'GITHUB_TOKEN', 'X_BEARER_TOKEN']) {
     if (source[`VITE_${k}`]) {
       throw new Error(`VITE_${k} est défini : les variables VITE_* sont publiques, déplacez ce secret.`);
     }

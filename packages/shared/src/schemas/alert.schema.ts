@@ -12,6 +12,14 @@ export const AlertType = z.enum([
   'div_burn_slowdown',
   'mint_authority_changed',
   'freeze_authority_changed',
+  'watch_tokenomics_change',
+  'watch_content_change',
+  'watch_unannounced_change',
+  'watch_claim_contradicted',
+  'watch_claim_due',
+  'team_transfer_to_exchange',
+  'team_lp_remove',
+  'team_sell',
 ]);
 export type AlertType = z.infer<typeof AlertType>;
 

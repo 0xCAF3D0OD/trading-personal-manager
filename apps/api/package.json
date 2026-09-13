@@ -18,11 +18,15 @@
     "@noble/curves": "^1.6.0",
     "@noble/hashes": "^1.5.0",
     "@tpm/shared": "*",
+    "diff": "^7.0.0",
+    "fast-xml-parser": "^4.5.7",
     "fastify": "^5.1.0",
+    "htmlparser2": "^9.1.0",
     "node-cron": "^3.0.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/diff": "^6.0.0",
     "@types/node": "^24.0.0",
     "@types/node-cron": "^3.0.11",
     "pino-pretty": "^13.0.0",
