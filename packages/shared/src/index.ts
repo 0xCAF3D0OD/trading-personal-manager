@@ -7,3 +7,5 @@ export * from './schemas/divergence.schema.js';
 export * from './schemas/plan.schema.js';
 export * from './schemas/alert.schema.js';
 export * from './schemas/system.schema.js';
+export * from './schemas/watch.schema.js';
+export * from './defaults/watch.js';

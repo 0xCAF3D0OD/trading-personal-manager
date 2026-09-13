@@ -4,6 +4,7 @@ import type { Services } from '../services/index.js';
 import type { Scheduler } from '../jobs/scheduler.js';
 import { runHolderSnapshot } from '../jobs/snapshot-holders.job.js';
 import { runMarketSnapshot } from '../jobs/snapshot-market.job.js';
+import { runWatchNews, runWatchOnchain, runWatchPages, runWatchReview } from '../jobs/watch.jobs.js';
 
 export function systemRoutes(app: FastifyInstance, s: Services, scheduler: Scheduler | null, expensive: { config: { rateLimit: { max: number; timeWindow: string } } }): void {
   const h = s.ctx.sources.health;
@@ -19,6 +20,10 @@ export function systemRoutes(app: FastifyInstance, s: Services, scheduler: Sched
     if (!scheduler) return reply.status(409).send({ error: 'Jobs désactivés (JOBS_ENABLED=false)', code: 'jobs_disabled' });
     if (name === 'market-snapshot') await scheduler.run(name, runMarketSnapshot);
     else if (name === 'holder-snapshot') await scheduler.run(name, (svc) => runHolderSnapshot(svc));
+    else if (name === 'watch-pages') await scheduler.run(name, runWatchPages);
+    else if (name === 'watch-news') await scheduler.run(name, runWatchNews);
+    else if (name === 'watch-onchain') await scheduler.run(name, runWatchOnchain);
+    else if (name === 'watch-review') await scheduler.run(name, runWatchReview);
     else return reply.status(404).send({ error: `Job inconnu : ${name}`, code: 'not_found' });
     return envelope(h, { ran: name });
   });

@@ -12,6 +12,7 @@ services:
       DATABASE_PATH: /app/data/app.db
       # Le front est servi par nginx sur la même origine : pas de CORS nécessaire.
       CORS_ORIGIN: ""
+      RENDERER_URL: http://renderer:3100
     volumes:
       - ./data:/app/data
     restart: unless-stopped
@@ -20,6 +21,18 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+
+  # Rendu sans tête pour la veille (pages rendues côté client). Réseau interne, aucune clé, un rendu à la fois.
+  renderer:
+    build:
+      context: .
+      dockerfile: apps/renderer/Dockerfile
+    container_name: tpm-renderer
+    restart: unless-stopped
+    mem_limit: 768m
+    shm_size: 256m
+    expose:
+      - "3100"
 
   web:
     build:
@@ -31,4 +44,5 @@ services:
     depends_on:
       api:
         condition: service_healthy
+
     restart: unless-stopped

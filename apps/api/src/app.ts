@@ -8,6 +8,8 @@ import { registerErrorHandler } from './plugins/error-handler.js';
 import { alertsRoutes } from './routes/alerts.routes.js';
 import { plansRoutes } from './routes/plans.routes.js';
 import { systemRoutes } from './routes/system.routes.js';
+import { settingsRoutes } from './routes/settings.routes.js';
+import { watchRoutes } from './routes/watch.routes.js';
 import { tokenDetailRoutes } from './routes/token-detail.routes.js';
 import { tokensRoutes } from './routes/tokens.routes.js';
 import { buildServices, type Services } from './services/index.js';
@@ -50,6 +52,8 @@ export async function buildApp(env: Env, db: Db, opts: { logger?: boolean | obje
     plansRoutes(api, services);
     alertsRoutes(api, services, expensive);
     systemRoutes(api, services, scheduler, expensive);
+    settingsRoutes(api, services);
+    watchRoutes(api, services, expensive);
   }, { prefix: '/api' });
 
   app.addHook('onClose', async () => scheduler?.stop());

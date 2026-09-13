@@ -1,0 +1,15 @@
+{
+  "name": "@tpm/renderer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Service de rendu sans tête pour la veille : HTML rendu + réponses JSON observées",
+  "scripts": {
+    "start": "node server.mjs",
+    "typecheck": "node --check server.mjs",
+    "build": "node --check server.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
+}

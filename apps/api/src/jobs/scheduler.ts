@@ -4,6 +4,8 @@ import type { Services } from '../services/index.js';
 import { runAlertEvaluation } from './evaluate-alerts.job.js';
 import { runHolderSnapshot } from './snapshot-holders.job.js';
 import { runMarketSnapshot } from './snapshot-market.job.js';
+import { runWatchMaintenance, runWatchNews, runWatchOnchain, runWatchPages, runWatchReview } from './watch.jobs.js';
+import { JOB_SCHEDULES } from '../services/index.js';
 
 type JobFn = (s: Services) => Promise<string>;
 
@@ -43,6 +45,12 @@ export class Scheduler {
     schedule('market-snapshot', env.CRON_MARKET_SNAPSHOT, runMarketSnapshot);
     schedule('holder-snapshot', env.CRON_HOLDER_SNAPSHOT, (s) => runHolderSnapshot(s));
     schedule('alert-eval', env.CRON_ALERT_EVAL, runAlertEvaluation);
+    const wj = JOB_SCHEDULES(env);
+    schedule('watch-pages', wj['watch-pages']!, runWatchPages);
+    schedule('watch-news', wj['watch-news']!, runWatchNews);
+    schedule('watch-onchain', wj['watch-onchain']!, runWatchOnchain);
+    schedule('watch-review', wj['watch-review']!, runWatchReview);
+    schedule('watch-maintenance', wj['watch-maintenance']!, runWatchMaintenance);
     // Entretien hebdomadaire du cache et des logs d'usage
     this.tasks.push(cron.schedule('0 4 * * 1', () => {
       this.s.ctx.cache.purgeExpired();
