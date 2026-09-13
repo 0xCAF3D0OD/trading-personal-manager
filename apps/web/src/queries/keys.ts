@@ -1,0 +1,16 @@
+export const qk = {
+  watchlist: ['tokens'] as const,
+  token: (id: number) => ['tokens', id] as const,
+  health: (id: number) => ['tokens', id, 'health'] as const,
+  market: (id: number) => ['tokens', id, 'market'] as const,
+  supply: (id: number) => ['tokens', id, 'supply'] as const,
+  holders: (id: number) => ['tokens', id, 'holders'] as const,
+  divergences: (id: number) => ['tokens', id, 'divergences'] as const,
+  history: (id: number, days: number) => ['tokens', id, 'history', days] as const,
+  creator: (id: number) => ['tokens', id, 'creator'] as const,
+  plans: (id: number) => ['tokens', id, 'plans'] as const,
+  alerts: (tokenId?: number) => ['alerts', tokenId ?? 'all'] as const,
+  alertEvents: (tokenId?: number) => ['alerts', 'events', tokenId ?? 'all'] as const,
+  sources: ['system', 'sources'] as const,
+  usage: ['system', 'usage'] as const,
+};

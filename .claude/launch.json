@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web-smoke",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["API_PROXY_TARGET=http://localhost:3999", "npm", "run", "dev", "-w", "apps/web"],
+      "port": 5173
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "apps/web"],
+      "port": 5173
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "apps/api"],
+      "port": 3000
+    }
+  ]
+}
