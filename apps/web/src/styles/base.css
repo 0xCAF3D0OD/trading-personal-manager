@@ -109,3 +109,4 @@ ul.plain { list-style: none; margin: 0; padding: 0; }
 .state-ok .summary-dot, .state-warn .summary-dot, .state-risk .summary-dot, .state-partial .summary-dot, .state-unknown .summary-dot { color: transparent; }
 .summary-cell { white-space: nowrap; font-size: .85rem; }
 @media (max-width: 720px) { .summary-row { grid-template-columns: 1fr; } .topbar nav { gap: .6rem; } }
+.purpose { font-style: italic; }

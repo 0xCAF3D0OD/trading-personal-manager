@@ -29,7 +29,9 @@ export class SummaryService {
     try { extensions = h ? (JSON.parse(h.token2022_extensions) as string[]) : []; } catch { extensions = []; }
 
     const m = this.ctx.snapshots.latestMarket(tokenId);
-    const ratio = m ? (m.liquidityToMcapPct ?? (m.liquidityUsd !== null && m.marketCapUsd ? (m.liquidityUsd / m.marketCapUsd) * 100 : null)) : null;
+    // Question 2 : tous les pools connus, pas seulement le principal, sinon un gros token à liquidité répartie paraît invendable.
+    const liqAll = m ? (m.liquidityTotalUsd ?? m.liquidityUsd) : null;
+    const ratio = m && liqAll !== null && m.marketCapUsd ? (liqAll / m.marketCapUsd) * 100 : null;
     const band = liquidityBand(ratio, marketCfg.liquidityBands);
 
     const slips = this.ctx.snapshots.slippageHistory(tokenId, now - 7 * 86400);
@@ -48,7 +50,7 @@ export class SummaryService {
 
     const inputs: SummaryInputs = {
       health: h ? { mintAuthority: h.mint_authority, freezeAuthority: h.freeze_authority, extensions, checkedAt: h.checked_at } : null,
-      liquidity: m ? { ratioPct: ratio, band: band.band, mainPoolUsd: m.liquidityUsd, ts: m.ts, source: m.liquiditySource ?? m.priceSource } : null,
+      liquidity: m ? { ratioPct: ratio, band: band.band, totalUsd: liqAll, poolsCount: m.poolsCount ?? (m.liquidityUsd !== null ? 1 : 0), ts: m.ts, source: m.liquiditySource ?? m.priceSource } : null,
       slippage: slip ? { orderUsd: slip.orderUsd, impactPct: slip.impactPct, ts: slip.ts } : null,
       holders: latestHolders ? { top10Pct: latestHolders.top10Pct, holderCount: latestHolders.holderCount, truncated: latestHolders.truncated, ts: latestHolders.ts, source: latestHolders.source, fullTierMissing } : null,
       team: {

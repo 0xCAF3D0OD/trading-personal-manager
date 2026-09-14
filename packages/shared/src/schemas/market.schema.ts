@@ -78,9 +78,14 @@ export const MarketMetricsView = z.object({
     mainPoolUsd: z.number().nullable(),
     totalUsd: z.number().nullable(),
     poolsCount: z.number(),
+    /** Pool principal rapporté à la capitalisation recalculée : lecture fine, utilisée par les divergences. */
     ratioPct: z.number().nullable(),
     band: LiquidityBand.nullable(),
     bandLabel: z.string().nullable(),
+    /** Tous les pools connus rapportés à la capitalisation : la lecture « puis-je sortir ? », cohérente entre synthèse et carte. */
+    totalRatioPct: z.number().nullable(),
+    totalBand: LiquidityBand.nullable(),
+    totalBandLabel: z.string().nullable(),
     pools: z.array(PoolInfo),
     source: SourceName,
   }),

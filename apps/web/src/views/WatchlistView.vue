@@ -7,6 +7,7 @@ import QueryState from '@/components/shared/QueryState.vue';
 import { useSummaries, useWatchlist, useWatchlistMutations } from '@/queries/useWatchlist';
 import { useNotificationsStore } from '@/stores/notifications.store';
 import { useUiStore } from '@/stores/ui.store';
+import { SUMMARY_DISCLAIMER } from '@tpm/shared';
 
 const q = useWatchlist();
 const summaries = useSummaries();
@@ -47,7 +48,7 @@ async function del(id: number, symbol: string | null) {
       </table>
     </div>
     <p class="faint small">
-      <template v-if="!detail">Cinq réponses courtes par token, à lire côte à côte : survolez pour la phrase complète, ouvrez la fiche pour la justification. </template>
+      <template v-if="!detail">{{ SUMMARY_DISCLAIMER }} Survolez une réponse pour la phrase complète, ouvrez la fiche pour la justification. </template>
       Prix rafraîchi toutes les 60 s depuis le cache. Relevé des détenteurs quotidien à 06:00.
     </p>
   </div>

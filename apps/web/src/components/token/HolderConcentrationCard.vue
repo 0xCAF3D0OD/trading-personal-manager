@@ -9,6 +9,7 @@ import Terme from '@/components/shared/Terme.vue';
 import { fmtNum, fmtPct, fmtUsd, shortAddr } from '@/composables/useFormat';
 import { useCardDetail } from '@/composables/useCardDetail';
 import { useUiStore } from '@/stores/ui.store';
+import { SUMMARY_PURPOSE } from '@tpm/shared';
 const props = defineProps<{ holders: HoldersView; refreshing?: boolean }>();
 defineEmits<{ refresh: [] }>();
 const { open, detailMode, toggle } = useCardDetail();
@@ -33,6 +34,7 @@ const concentrated = computed(() => latest.value?.top10Pct !== null && latest.va
         <button class="ghost small" :disabled="refreshing" title="Forcer un relevé (limité)" @click="$emit('refresh')">↻</button>
       </div>
     </div>
+    <p class="small faint purpose" style="margin:0 0 .4rem">{{ SUMMARY_PURPOSE.holders }}</p>
     <div v-if="!latest" class="empty">Aucun relevé des détenteurs pour l’instant. Le premier est pris à l’ajout, puis chaque jour à 06:00.</div>
     <template v-else>
       <div class="row" style="gap:.75rem">

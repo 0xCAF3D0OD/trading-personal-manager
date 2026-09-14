@@ -9,9 +9,24 @@ export type SummaryQuestionId = z.infer<typeof SummaryQuestionId>;
 export const SummaryState = z.enum(['ok', 'warn', 'risk', 'partial', 'unknown']);
 export type SummaryState = z.infer<typeof SummaryState>;
 
+/**
+ * À quoi sert chaque question, par rapport à l'argent du lecteur. Personne ne peut dire si un token rapportera :
+ * ces cinq questions disent ce qui peut faire perdre, et c'est vérifiable. Texte unique, partagé entre la synthèse et les cartes.
+ */
+export const SUMMARY_PURPOSE: Record<SummaryQuestionId, string> = {
+  trap: 'Si oui, vous pouvez perdre sans que le prix bouge : l’équipe dilue, gèle ou prélève.',
+  exit: 'Un gain n’existe que si vous pouvez vendre sans faire chuter le prix. C’est le coût réel de votre sortie.',
+  holders: 'Quand quelques portefeuilles tiennent l’essentiel, une seule de leurs ventes efface une hausse.',
+  team: 'Une équipe qui vend, retire la liquidité ou ne tient pas ses promesses annonce la suite avant le prix.',
+  market: 'Une hausse que le volume, la liquidité et les détenteurs ne confirment pas tient rarement.',
+};
+export const SUMMARY_DISCLAIMER = 'Personne ne peut dire si ce token vous rapportera. Ces cinq questions disent ce qui peut vous faire perdre, et chacune est vérifiable.';
+
 export const SummaryAnswer = z.object({
   id: SummaryQuestionId,
   question: z.string(),
+  /** À quoi sert la question pour l'argent du lecteur (SUMMARY_PURPOSE). */
+  purpose: z.string(),
   state: SummaryState,
   /** Phrase complète, gabarit fixe en code. */
   answer: z.string(),

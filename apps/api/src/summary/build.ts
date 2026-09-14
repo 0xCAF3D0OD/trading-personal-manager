@@ -1,4 +1,5 @@
 import type { LiquidityBand, SourceName, SummaryAnswer, SummaryState } from '@tpm/shared';
+import { SUMMARY_PURPOSE } from '@tpm/shared';
 
 /**
  * Les cinq questions de la lecture simple (docs/05, A.2), à partir de données déjà relevées.
@@ -7,7 +8,7 @@ import type { LiquidityBand, SourceName, SummaryAnswer, SummaryState } from '@tp
  */
 export interface SummaryInputs {
   health: { mintAuthority: string | null; freezeAuthority: string | null; extensions: string[]; checkedAt: number } | null;
-  liquidity: { ratioPct: number | null; band: LiquidityBand | null; mainPoolUsd: number | null; ts: number; source: SourceName } | null;
+  liquidity: { ratioPct: number | null; band: LiquidityBand | null; totalUsd: number | null; poolsCount: number; ts: number; source: SourceName } | null;
   slippage: { orderUsd: number; impactPct: number | null; ts: number } | null;
   holders: { top10Pct: number | null; holderCount: number | null; truncated: boolean; ts: number; source: SourceName; fullTierMissing: string | null } | null;
   team: {
@@ -31,7 +32,7 @@ const pct = (v: number, d = 0) => `${v.toFixed(d).replace('.', ',')} %`;
 const usd = (v: number) => `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v)} $`;
 
 function trap(i: SummaryInputs): SummaryAnswer {
-  const base = { id: 'trap' as const, question: 'Peut-on me piéger ?', card: 'health', missing: null, source: 'rpc' as SourceName };
+  const base = { id: 'trap' as const, question: 'Peut-on me piéger ?', purpose: SUMMARY_PURPOSE.trap, card: 'health', missing: null, source: 'rpc' as SourceName };
   if (!i.health) return { ...base, state: 'unknown', answer: 'Inconnu : la santé structurelle n’a pas encore été relevée.', short: 'inconnu', fetchedAt: null };
   const powers: string[] = [];
   if (i.health.mintAuthority) powers.push('créer de nouveaux tokens');
@@ -45,7 +46,7 @@ function trap(i: SummaryInputs): SummaryAnswer {
 }
 
 function exit(i: SummaryInputs, s: SummarySettings): SummaryAnswer {
-  const base = { id: 'exit' as const, question: 'Puis-je sortir ?', card: 'liquidity', missing: null };
+  const base = { id: 'exit' as const, question: 'Puis-je sortir ?', purpose: SUMMARY_PURPOSE.exit, card: 'liquidity', missing: null };
   const l = i.liquidity;
   if (!l || l.ratioPct === null || !l.band) {
     return { ...base, state: 'unknown', source: l?.source ?? 'unavailable', fetchedAt: l?.ts ?? null, short: 'inconnu', answer: 'Inconnu : aucun relevé de liquidité rapporté à la capitalisation.' };
@@ -53,19 +54,20 @@ function exit(i: SummaryInputs, s: SummarySettings): SummaryAnswer {
   const slip = i.slippage && i.slippage.impactPct !== null
     ? ` Vendre ${usd(i.slippage.orderUsd)} coûterait ${pct(i.slippage.impactPct, 1)}.`
     : ` Coût d’une vente de ${usd(s.summarySlippageOrderUsd)} non estimé : cliquez sur Estimer.`;
-  const ratio = pct(l.ratioPct, 1);
+  const ratio = `${pct(l.ratioPct, 1)} de la capitalisation`;
+  const where = l.poolsCount > 1 ? ` sur ${l.poolsCount} pools` : ' dans le seul pool connu';
   const state: SummaryState = l.band === 'very_thin' ? 'risk' : l.band === 'thin' ? 'warn' : 'ok';
   const short = l.band === 'very_thin' ? 'très mince' : l.band === 'thin' ? 'mince' : l.band === 'correct' ? 'correcte' : 'confortable';
   const head = l.band === 'very_thin'
-    ? `Difficilement : liquidité très mince, ${ratio} de la capitalisation est disponible.`
+    ? `Difficilement : liquidité très mince, ${ratio} est disponible pour vendre${where}.`
     : l.band === 'thin'
-      ? `Avec prudence : liquidité mince, ${ratio} de la capitalisation est disponible.`
-      : `Oui, sans mal : ${ratio} de la capitalisation est disponible dans le pool principal.`;
+      ? `Avec prudence : liquidité mince, ${ratio} est disponible pour vendre${where}.`
+      : `Oui, sans mal : ${ratio} est disponible pour vendre${where}.`;
   return { ...base, state, source: l.source, fetchedAt: l.ts, short, answer: head + slip };
 }
 
 function holders(i: SummaryInputs, s: SummarySettings): SummaryAnswer {
-  const base = { id: 'holders' as const, question: 'Qui tient le token ?', card: 'holders' };
+  const base = { id: 'holders' as const, question: 'Qui tient le token ?', purpose: SUMMARY_PURPOSE.holders, card: 'holders' };
   const h = i.holders;
   if (!h || h.top10Pct === null) {
     return { ...base, state: 'unknown', source: h?.source ?? 'unavailable', fetchedAt: h?.ts ?? null, missing: h?.fullTierMissing ?? null, short: 'inconnue', answer: 'Inconnu : aucun relevé des détenteurs pour l’instant. Le premier est pris à l’ajout, puis chaque jour.' };
@@ -82,7 +84,7 @@ function holders(i: SummaryInputs, s: SummarySettings): SummaryAnswer {
 }
 
 function team(i: SummaryInputs): SummaryAnswer {
-  const base = { id: 'team' as const, question: 'Que fait l’équipe ?', card: 'team', missing: null };
+  const base = { id: 'team' as const, question: 'Que fait l’équipe ?', purpose: SUMMARY_PURPOSE.team, card: 'team', missing: null };
   const t = i.team;
   const resolved = t.claimsKept + t.claimsContradicted + t.claimsExpired;
   const claims = resolved > 0
@@ -105,7 +107,7 @@ function team(i: SummaryInputs): SummaryAnswer {
 }
 
 function market(i: SummaryInputs): SummaryAnswer {
-  const base = { id: 'market' as const, question: 'Le marché confirme-t-il l’histoire ?', card: 'divergences', missing: null, source: 'local' as SourceName };
+  const base = { id: 'market' as const, question: 'Le marché confirme-t-il l’histoire ?', purpose: SUMMARY_PURPOSE.market, card: 'divergences', missing: null, source: 'local' as SourceName };
   const d = i.divergences;
   // Une règle vide de sens sur un token neuf (burn annoncé sans engagement) peut être « ok » à elle seule : on exige au moins deux règles réellement évaluées.
   if (d.evaluated === 0 || d.evaluated - d.insufficient <= 1) {

@@ -7,6 +7,7 @@ import StatusBadge from '@/components/shared/StatusBadge.vue';
 import Terme from '@/components/shared/Terme.vue';
 import { shortAddr } from '@/composables/useFormat';
 import { useCardDetail } from '@/composables/useCardDetail';
+import { SUMMARY_PURPOSE } from '@tpm/shared';
 const props = defineProps<{ health: TokenHealth; refreshing?: boolean }>();
 defineEmits<{ refresh: [] }>();
 const { open, detailMode, toggle } = useCardDetail();
@@ -26,6 +27,7 @@ const simpleItems = computed(() => props.health.items.filter((i) => SIMPLE_KEYS.
       <h2>Peut-on me piéger ?</h2>
       <div class="row"><SourceTag source="rpc" :fetched-at="health.checkedAt" cached /><button class="ghost small" :disabled="refreshing" title="Revérifier" @click="$emit('refresh')">↻</button></div>
     </div>
+    <p class="small faint purpose" style="margin:0 0 .4rem">{{ SUMMARY_PURPOSE.trap }}</p>
     <ul class="plain">
       <li v-for="it in simpleItems" :key="it.key" class="row" style="align-items:flex-start;gap:.6rem;padding:.25rem 0">
         <StatusBadge :status="it.status" />

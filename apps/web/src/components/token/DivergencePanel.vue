@@ -7,6 +7,7 @@ import StatusBadge from '@/components/shared/StatusBadge.vue';
 import Terme from '@/components/shared/Terme.vue';
 import { fmtPct } from '@/composables/useFormat';
 import { useCardDetail } from '@/composables/useCardDetail';
+import { SUMMARY_PURPOSE } from '@tpm/shared';
 const props = defineProps<{ divergences: Divergence[] }>();
 const { open, detailMode, toggle } = useCardDetail();
 const triggered = computed(() => props.divergences.filter((d) => d.status === 'triggered'));
@@ -25,6 +26,7 @@ function series(d: Divergence) {
       <h2>Le marché confirme-t-il l’histoire ?</h2>
       <span class="faint small">{{ triggered.length }} <Terme mot="divergence">contradiction(s)</Terme> sur {{ divergences.length }} règles, calculé sur les relevés quotidiens</span>
     </div>
+    <p class="small faint purpose" style="margin:0 0 .4rem">{{ SUMMARY_PURPOSE.market }}</p>
     <p v-if="!triggered.length" class="muted" style="margin:0">
       <template v-if="divergences.length - insufficient <= 1">Trop tôt : les règles demandent plusieurs jours de relevés quotidiens.</template>
       <template v-else>Aucune contradiction entre prix, volume, liquidité et détenteurs.</template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TokenSummary } from '@tpm/shared';
+import { SUMMARY_DISCLAIMER } from '@tpm/shared';
 import SourceTag from '@/components/shared/SourceTag.vue';
 defineProps<{ summary: TokenSummary }>();
 function go(card: string) {
@@ -12,11 +13,12 @@ function go(card: string) {
       <h2>En cinq questions</h2>
       <span class="faint small">cinq réponses, pas de note : la somme est la vôtre</span>
     </div>
+    <p class="small muted" style="margin:0 0 .5rem">{{ SUMMARY_DISCLAIMER }}</p>
     <ol class="summary-list">
       <li v-for="a in summary.answers" :key="a.id" class="summary-row" :class="`state-${a.state}`">
         <div class="summary-q">
           <span class="summary-dot" aria-hidden="true"></span>
-          <strong>{{ a.question }}</strong>
+          <div><strong>{{ a.question }}</strong><div class="faint small purpose">{{ a.purpose }}</div></div>
         </div>
         <div class="summary-a">
           <span>{{ a.answer }}</span>

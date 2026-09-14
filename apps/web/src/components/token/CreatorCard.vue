@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CreatorView } from '@/api/tokens.api';
 import type { SummaryAnswer } from '@tpm/shared';
+import { SUMMARY_PURPOSE } from '@tpm/shared';
 import { computed } from 'vue';
 import CardMore from '@/components/shared/CardMore.vue';
 import SourceTag from '@/components/shared/SourceTag.vue';
@@ -17,6 +18,7 @@ const risky = computed(() => props.creator.activities.filter((a) => a.kind.inclu
 <template>
   <section id="card-team" class="card">
     <div class="card-head"><h2>Que fait l’équipe ?</h2><SourceTag :source="creator.source" :fetched-at="creator.fetchedAt" /></div>
+    <p class="small faint purpose" style="margin:0 0 .4rem">{{ SUMMARY_PURPOSE.team }}</p>
     <div v-if="teamAnswer" class="row" style="gap:.75rem;align-items:flex-start">
       <StatusBadge :status="STATE[teamAnswer.state] ?? 'unknown'" :label="teamAnswer.short" />
       <span>{{ teamAnswer.answer }}</span>

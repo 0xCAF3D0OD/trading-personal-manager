@@ -11,6 +11,8 @@ import { fmtPct, fmtUsd, shortAddr, timeAgo } from '@/composables/useFormat';
 import { useCardDetail } from '@/composables/useCardDetail';
 import { useSlippage } from '@/queries/useTokenDetail';
 import { useUiStore } from '@/stores/ui.store';
+import { SUMMARY_PURPOSE } from '@tpm/shared';
+const PURPOSE = SUMMARY_PURPOSE.exit;
 
 const props = defineProps<{ tokenId: number; market: MarketMetricsView; ratioHistory: SourcedSeries[] }>();
 const { open, detailMode, toggle } = useCardDetail();
@@ -24,21 +26,24 @@ const sizes = computed(() => slippage.data.value?.data.sizes ?? []);
 /** En lecture simple, une seule taille : celle des réglages (1 000 $ par défaut). */
 const mainSize = computed(() => sizes.value.find((s) => s.orderUsd === ui.settings.summarySlippageOrderUsd) ?? sizes.value[sizes.value.length - 1] ?? null);
 const simpleText = computed(() => {
-  const b = liq.value.band;
-  if (!b || liq.value.ratioPct === null) return 'Liquidité non rapportée à la capitalisation pour l’instant.';
-  const r = `${fmtPct(liq.value.ratioPct, { signed: false, digits: 1 })} de la capitalisation`;
-  return b === 'very_thin' ? `Très mince : ${r} seulement est disponible pour vendre. Sortir fera chuter le prix.`
-    : b === 'thin' ? `Mince : ${r} est disponible pour vendre. Une vente moyenne pèsera sur le prix.`
-      : b === 'correct' ? `Correcte : ${r} est disponible pour vendre.` : `Confortable : ${r} est disponible pour vendre.`;
+  // Même lecture que la question 2 de la synthèse : tous les pools connus, pas seulement le principal.
+  const b = liq.value.totalBand;
+  if (!b || liq.value.totalRatioPct === null) return 'Liquidité non rapportée à la capitalisation pour l’instant.';
+  const r = `${fmtPct(liq.value.totalRatioPct, { signed: false, digits: 1 })} de la capitalisation`;
+  const where = liq.value.poolsCount > 1 ? ` sur ${liq.value.poolsCount} pools` : '';
+  return b === 'very_thin' ? `Très mince : ${r} seulement est disponible pour vendre${where}. Sortir fera chuter le prix.`
+    : b === 'thin' ? `Mince : ${r} est disponible pour vendre${where}. Une vente moyenne pèsera sur le prix.`
+      : b === 'correct' ? `Correcte : ${r} est disponible pour vendre${where}.` : `Confortable : ${r} est disponible pour vendre${where}.`;
 });
 </script>
 <template>
   <section id="card-liquidity" class="card">
     <div class="card-head"><h2>Puis-je sortir ?</h2><SourceTag :source="liq.source" :fetched-at="market.fetchedAt" /></div>
     <div class="row" style="gap:.75rem">
-      <StatusBadge v-if="liq.band" :status="BAND[liq.band] ?? 'unknown'" :label="liq.bandLabel ?? ''" />
+      <StatusBadge v-if="liq.totalBand" :status="BAND[liq.totalBand] ?? 'unknown'" :label="liq.totalBandLabel ?? ''" />
       <span>{{ simpleText }}</span>
     </div>
+    <p class="small faint purpose" style="margin:.25rem 0 0">{{ PURPOSE }}</p>
     <p class="small muted" style="margin:.4rem 0 0"><Terme mot="liquidité">Liquidité</Terme> du <Terme mot="pool">pool</Terme> principal : {{ fmtUsd(liq.mainPoolUsd, { compact: true }) }}<template v-if="liq.poolsCount > 1">, {{ liq.poolsCount }} pools au total pour {{ fmtUsd(liq.totalUsd, { compact: true }) }}</template>.</p>
 
     <div class="row" style="margin-top:.75rem;gap:.75rem;align-items:baseline">
@@ -69,7 +74,7 @@ const simpleText = computed(() => {
             </tr>
           </tbody>
         </table></div>
-        <p v-if="liq.poolsCount > 1" class="small muted">{{ fmtPct(liq.mainPoolUsd !== null && liq.totalUsd ? (liq.mainPoolUsd / liq.totalUsd) * 100 : null, { signed: false, digits: 0 }) }} de la liquidité est sur le pool principal.</p>
+        <p class="small muted">Pool principal seul : {{ fmtPct(liq.ratioPct, { signed: false, digits: 1 }) }} de la capitalisation<span v-if="liq.bandLabel"> ({{ liq.bandLabel.toLowerCase() }})</span><template v-if="liq.poolsCount > 1"> · {{ fmtPct(liq.mainPoolUsd !== null && liq.totalUsd ? (liq.mainPoolUsd / liq.totalUsd) * 100 : null, { signed: false, digits: 0 }) }} de la liquidité totale y est déposée</template>. C’est cette lecture fine que suivent les divergences et l’alerte de retrait.</p>
       </details>
 
       <template v-if="showSlippage && sizes.length">

@@ -39,6 +39,8 @@ Bloc unique en tête de fiche. Cinq lignes, une question, une réponse en mots, 
 
 Règles :
 
+- **La finalité est écrite** : au-dessus des cinq questions, une phrase fixe (« Personne ne peut dire si ce token vous rapportera. Ces cinq questions disent ce qui peut vous faire perdre, et chacune est vérifiable. »), et sous chaque question une ligne « à quoi ça sert » rapportée à l'argent du lecteur (`SUMMARY_PURPOSE`, partagée avec les cartes). Demandé par Kevin le 14 septembre 2026 : le visiteur doit savoir à quoi sert chaque information.
+- **La question 2 lit tous les pools connus**, pas seulement le principal : un gros token à liquidité répartie paraissait invendable. Le ratio du pool principal reste affiché en détail, car c'est lui que suivent les divergences et l'alerte de retrait.
 - Une réponse « Inconnu » ou « Partielle » est toujours accompagnée de la raison et, si une variable manque, de son nom, comme la page Système le fait déjà.
 - Les seuils qui séparent « répartie » de « concentrée », « sans mal » de « difficilement », sont ceux déjà en réglages (bandes de liquidité, top 10 des drapeaux du scanner à 40 %). Aucun seuil nouveau.
 - Les phrases sont des gabarits fixes en code, pas des textes générés : le même état donne toujours la même phrase.
