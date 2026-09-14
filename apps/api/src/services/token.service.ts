@@ -20,7 +20,7 @@ export class TokenService {
         ...toToken(r),
         priceUsd: m?.priceUsd ?? null,
         priceSource: m?.priceSource ?? null,
-        priceChange24hPct: null,
+        priceChange24hPct: m?.pctH24 ?? null,
         marketCapUsd: m?.marketCapUsd ?? null,
         volume24hUsd: m?.volume24hUsd ?? null,
         ageDays: r.created_at ? Math.floor((now - r.created_at) / 86400) : null,

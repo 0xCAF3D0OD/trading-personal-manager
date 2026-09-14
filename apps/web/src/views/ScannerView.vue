@@ -27,6 +27,16 @@ const { settings } = storeToRefs(useUiStore());
 const detail = computed(() => settings.value.mode === 'detail');
 const o = computed(() => overview.data.value?.data);
 const stage2Only = ref<'all' | 2 | 3>('all');
+/** Filtres de lecture, côté navigateur : récent, forte évolution, liquidité minimale, sans drapeau. */
+const maxAgeH = ref<number>(0);        // 0 = tous
+const minPct24 = ref<number>(0);       // 0 = tous
+const minLiq = ref<number>(0);
+const cleanOnly = ref(false);
+const keptRows = computed(() => (results.data.value?.data ?? []).filter((r) =>
+  (maxAgeH.value === 0 || (r.metrics.ageHours !== null && r.metrics.ageHours <= maxAgeH.value))
+  && (minPct24.value === 0 || (r.metrics.pctH24 !== null && r.metrics.pctH24 >= minPct24.value))
+  && (minLiq.value === 0 || (r.metrics.liquidityUsd !== null && r.metrics.liquidityUsd >= minLiq.value))
+  && (!cleanOnly.value || (r.flagCount === 0 && r.unverifiedCount === 0))));
 const excludedRows = computed(() => (excluded.data.value?.data ?? []).filter((r) => stage2Only.value === 'all' || r.excludedStage === stage2Only.value));
 async function runNow() {
   try { const r = await run.mutateAsync(); notify.push('success', `Découverte : ${r.data.discover.inserted} nouveau(x) pool(s). Évaluation : ${r.data.evaluate}`, 9000); }
@@ -61,9 +71,18 @@ async function runNow() {
 
     <template v-if="tab === 'results'">
       <div class="row small"><span class="muted">Tokens gardés au cours des</span><select v-model.number="days" style="width:auto"><option :value="1">24 h</option><option :value="3">3 jours</option><option :value="7">7 jours</option></select><span class="muted">tri : drapeaux croissants, puis liquidité. La colonne « Où l’acheter » liste les DEX connus par leur pool et, si le token a une fiche CoinGecko, les plateformes centralisées comme Kraken. Aucun bouton d’achat : c’est une information, pas une invitation.</span></div>
+      <div class="row small filters">
+        <span class="muted">Affiner :</span>
+        <select v-model.number="maxAgeH" style="width:auto"><option :value="0">Tout âge</option><option :value="24">Récent : moins de 24 h</option><option :value="72">Moins de 3 jours</option><option :value="168">Moins de 7 jours</option></select>
+        <select v-model.number="minPct24" style="width:auto"><option :value="0">Toute variation</option><option :value="100">Forte : ≥ +100 % / 24 h</option><option :value="200">Très forte : ≥ +200 %</option><option :value="500">Extrême : ≥ +500 %</option></select>
+        <select v-model.number="minLiq" style="width:auto"><option :value="0">Toute liquidité</option><option :value="50000">Liquidité ≥ 50 k$</option><option :value="200000">≥ 200 k$</option><option :value="1000000">≥ 1 M$</option></select>
+        <label class="row" style="cursor:pointer;color:var(--text);margin:0"><input v-model="cleanOnly" type="checkbox" style="width:auto" /> Sans drapeau et tout vérifié</label>
+        <span v-if="results.data.value" class="faint">{{ keptRows.length }} / {{ results.data.value.data.length }}</span>
+      </div>
       <QueryState :loading="results.isLoading.value" :error="results.error.value" />
       <div v-if="results.data.value && !results.data.value.data.length" class="empty">Aucun token n'a passé les filtres sur la période. C'est normal la plupart du temps : les seuils sont faits pour éliminer.</div>
-      <ScanResultsTable v-else-if="results.data.value" :rows="results.data.value.data" mode="kept" :detail="detail" />
+      <div v-else-if="results.data.value && !keptRows.length" class="empty">Aucun token ne correspond à ces critères. Élargissez un filtre.</div>
+      <ScanResultsTable v-else-if="results.data.value" :rows="keptRows" mode="kept" :detail="detail" />
     </template>
 
     <template v-else-if="tab === 'excluded'">

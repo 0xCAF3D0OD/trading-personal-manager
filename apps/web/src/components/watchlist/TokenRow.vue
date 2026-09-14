@@ -13,6 +13,7 @@ defineEmits<{ up: []; down: []; remove: [] }>();
     </td>
     <td class="num">{{ fmtUsd(item.priceUsd) }}<div v-if="detail"><SourceTag :source="item.priceSource" :fetched-at="item.lastMarketTs" /></div></td>
     <template v-if="!detail">
+      <td class="num" :class="pctClass(item.priceChange24hPct)">{{ fmtPct(item.priceChange24hPct) }}</td>
       <td v-if="!summary" colspan="5" class="faint small">synthèse indisponible</td>
       <td v-for="a in summary?.answers ?? []" v-else :key="a.id" :title="a.answer" class="summary-cell" :class="`state-${a.state}`">
         <span class="summary-dot" aria-hidden="true"></span>{{ a.short }}

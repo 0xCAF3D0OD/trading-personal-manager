@@ -16,3 +16,5 @@ export * from './defaults/scanner.js';
 export * from './glossary.js';
 export * from './schemas/summary.schema.js';
 export * from './defaults/ui.js';
+export * from './ai-prompt.js';
+export * from './schemas/report.schema.js';

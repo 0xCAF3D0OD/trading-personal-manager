@@ -1,0 +1,21 @@
+{
+  "name": "@tpm/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Connecteur MCP local : permet à l'application de bureau Claude (abonnement, sans clé) de lire les dossiers de la plateforme",
+  "bin": { "tpm-mcp": "dist/index.js" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.6.3"
+  }
+}

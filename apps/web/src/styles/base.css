@@ -110,3 +110,5 @@ ul.plain { list-style: none; margin: 0; padding: 0; }
 .summary-cell { white-space: nowrap; font-size: .85rem; }
 @media (max-width: 720px) { .summary-row { grid-template-columns: 1fr; } .topbar nav { gap: .6rem; } }
 .purpose { font-style: italic; }
+.filters { gap: .5rem; }
+.filters select { padding: .3rem .5rem; }
