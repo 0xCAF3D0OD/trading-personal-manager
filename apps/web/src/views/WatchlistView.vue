@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import AddTokenForm from '@/components/watchlist/AddTokenForm.vue';
 import TokenRow from '@/components/watchlist/TokenRow.vue';
+import CollectionExportBar from '@/components/shared/CollectionExportBar.vue';
 import QueryState from '@/components/shared/QueryState.vue';
 import { useSummaries, useWatchlist, useWatchlistMutations } from '@/queries/useWatchlist';
 import { useNotificationsStore } from '@/stores/notifications.store';
@@ -54,7 +55,9 @@ async function del(id: number, symbol: string | null) {
       <select v-model.number="minAbsPct24" style="width:auto"><option :value="0">Toute variation</option><option :value="10">Évolution ≥ 10 % / 24 h</option><option :value="25">≥ 25 %</option><option :value="50">Forte : ≥ 50 %</option><option :value="100">≥ 100 %</option></select>
       <select v-model="sortBy" style="width:auto"><option value="manual">Mon ordre</option><option value="change">Plus forte variation d’abord</option><option value="age">Plus récent d’abord</option></select>
       <span class="faint">{{ items.length }} / {{ all.length }}</span>
+      <CollectionExportBar path="/dossier/list" :params="filtering ? { ids: items.map((t) => t.id).join(',') } : {}" label="Dossier de la liste" />
     </div>
+    <div v-else-if="all.length === 1" class="row small filters"><CollectionExportBar path="/dossier/list" :params="{}" label="Dossier de la liste" /></div>
     <QueryState :loading="q.isLoading.value" :error="q.error.value" />
     <div v-if="q.data.value && !all.length" class="empty">Aucun token surveillé. Ajoutez une adresse de mint ci-dessus.</div>
     <div v-else-if="q.data.value && !items.length" class="empty">Aucun token ne correspond à ces critères. Élargissez un filtre.</div>

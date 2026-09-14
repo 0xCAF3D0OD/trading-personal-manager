@@ -4,6 +4,7 @@ import { ApiHttpError } from '@/api/http';
 import ScanResultsTable from '@/components/scanner/ScanResultsTable.vue';
 import ScanRetroPanel from '@/components/scanner/ScanRetroPanel.vue';
 import ScannerSettingsPanel from '@/components/settings/ScannerSettingsPanel.vue';
+import CollectionExportBar from '@/components/shared/CollectionExportBar.vue';
 import QueryState from '@/components/shared/QueryState.vue';
 import StatusBadge from '@/components/shared/StatusBadge.vue';
 import { SCAN_STAGE2_REASONS } from '@tpm/shared';
@@ -90,6 +91,7 @@ async function runNow() {
         <select v-model.number="minLiq" style="width:auto"><option :value="0">Toute liquidité</option><option :value="50000">Liquidité ≥ 50 k$</option><option :value="200000">≥ 200 k$</option><option :value="1000000">≥ 1 M$</option></select>
         <label class="row" style="cursor:pointer;color:var(--text);margin:0"><input v-model="cleanOnly" type="checkbox" style="width:auto" /> Sans drapeau et tout vérifié</label>
         <span v-if="results.data.value" class="faint">{{ keptRows.length }} / {{ results.data.value.data.length }}</span>
+        <CollectionExportBar path="/dossier/scanner" :params="{ days: String(days), ...(results.data.value && keptRows.length < results.data.value.data.length ? { addresses: keptRows.map((r) => r.tokenAddress).join(',') } : {}) }" label="Dossier des résultats" />
       </div>
       <QueryState :loading="results.isLoading.value" :error="results.error.value" />
       <div v-if="results.data.value && !results.data.value.data.length" class="empty">Aucun token n'a passé les filtres sur la période. C'est normal la plupart du temps : les seuils sont faits pour éliminer.</div>
