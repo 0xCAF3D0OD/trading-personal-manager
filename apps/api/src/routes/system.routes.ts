@@ -4,7 +4,7 @@ import type { Services } from '../services/index.js';
 import type { Scheduler } from '../jobs/scheduler.js';
 import { runHolderSnapshot } from '../jobs/snapshot-holders.job.js';
 import { runMarketSnapshot } from '../jobs/snapshot-market.job.js';
-import { runWatchNews, runWatchOnchain, runWatchPages, runWatchReview } from '../jobs/watch.jobs.js';
+import { runMarketSlippage, runScanDiscover, runScanEvaluate, runScanRetro, runWatchNews, runWatchOnchain, runWatchPages, runWatchReview } from '../jobs/watch.jobs.js';
 
 export function systemRoutes(app: FastifyInstance, s: Services, scheduler: Scheduler | null, expensive: { config: { rateLimit: { max: number; timeWindow: string } } }): void {
   const h = s.ctx.sources.health;
@@ -24,6 +24,10 @@ export function systemRoutes(app: FastifyInstance, s: Services, scheduler: Sched
     else if (name === 'watch-news') await scheduler.run(name, runWatchNews);
     else if (name === 'watch-onchain') await scheduler.run(name, runWatchOnchain);
     else if (name === 'watch-review') await scheduler.run(name, runWatchReview);
+    else if (name === 'market-slippage') await scheduler.run(name, runMarketSlippage);
+    else if (name === 'scan-discover') await scheduler.run(name, runScanDiscover);
+    else if (name === 'scan-evaluate') await scheduler.run(name, runScanEvaluate);
+    else if (name === 'scan-retro') await scheduler.run(name, runScanRetro);
     else return reply.status(404).send({ error: `Job inconnu : ${name}`, code: 'not_found' });
     return envelope(h, { ran: name });
   });

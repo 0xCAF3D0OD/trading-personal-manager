@@ -1,4 +1,4 @@
-import { WATCH_DEFAULTS, WATCH_DEFAULTS_VERSION, WatchSettings, type SettingsEnvelope } from '@tpm/shared';
+import { MARKET_DEFAULTS, MARKET_DEFAULTS_VERSION, MarketSettings, SCANNER_DEFAULTS, SCANNER_DEFAULTS_VERSION, ScannerSettings, WATCH_DEFAULTS, WATCH_DEFAULTS_VERSION, WatchSettings, type SettingsEnvelope } from '@tpm/shared';
 import type { ZodTypeAny } from 'zod';
 import { AppContext, NotFoundError, ValidationError } from './context.js';
 
@@ -8,6 +8,8 @@ interface ModuleDef { schema: ZodTypeAny; defaults: unknown; version: number }
 export class SettingsService {
   private readonly modules: Record<string, ModuleDef> = {
     watch: { schema: WatchSettings, defaults: WATCH_DEFAULTS, version: WATCH_DEFAULTS_VERSION },
+    market: { schema: MarketSettings, defaults: MARKET_DEFAULTS, version: MARKET_DEFAULTS_VERSION },
+    scanner: { schema: ScannerSettings, defaults: SCANNER_DEFAULTS, version: SCANNER_DEFAULTS_VERSION },
   };
   private readonly cache = new Map<string, { id: number; value: unknown }>();
 

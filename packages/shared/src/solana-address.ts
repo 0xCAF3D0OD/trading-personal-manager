@@ -7,7 +7,8 @@ const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 export function decodeBase58(input: string): Uint8Array | null {
   if (!BASE58_RE.test(input)) return null;
-  const bytes: number[] = [0];
+  // Pas d'octet initial : chaque '1' de tête ajoute exactement un octet nul ci-dessous.
+  const bytes: number[] = [];
   for (const ch of input) {
     let carry = ALPHABET.indexOf(ch);
     if (carry < 0) return null;
@@ -27,7 +28,8 @@ export function decodeBase58(input: string): Uint8Array | null {
 }
 
 export function encodeBase58(bytes: Uint8Array): string {
-  const digits: number[] = [0];
+  // Pas de chiffre initial : 32 octets à zéro doivent donner exactement 32 '1', pas 33.
+  const digits: number[] = [];
   for (const byte of bytes) {
     let carry = byte;
     for (let i = 0; i < digits.length; i++) {

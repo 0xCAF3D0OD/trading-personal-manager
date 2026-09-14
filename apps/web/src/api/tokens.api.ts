@@ -1,4 +1,4 @@
-import type { Divergence, HoldersView, MarketView, SupplyView, Token, TokenHealth, TokenHistory, WatchlistItem } from '@tpm/shared';
+import type { Divergence, HoldersView, MarketMetricsView, SlippageEstimate, SupplyView, Token, TokenHealth, TokenHistoryView, WatchlistItem } from '@tpm/shared';
 import { http } from './http.js';
 
 export interface CreatorView {
@@ -14,11 +14,12 @@ export const tokensApi = {
   get: (id: number) => http.get<WatchlistItem>(`/tokens/${id}`),
   health: (id: number) => http.get<TokenHealth>(`/tokens/${id}/health`),
   refreshHealth: (id: number) => http.post<TokenHealth>(`/tokens/${id}/health/refresh`),
-  market: (id: number) => http.get<MarketView>(`/tokens/${id}/market`),
+  market: (id: number) => http.get<MarketMetricsView>(`/tokens/${id}/market`),
+  slippage: (id: number) => http.get<{ sizes: SlippageEstimate[]; history: { ts: number; orderUsd: number; impactPct: number | null; method: string }[] }>(`/tokens/${id}/slippage`),
   supply: (id: number) => http.get<SupplyView>(`/tokens/${id}/supply`),
   holders: (id: number) => http.get<HoldersView>(`/tokens/${id}/holders`),
   refreshHolders: (id: number) => http.post<HoldersView>(`/tokens/${id}/holders/refresh`),
   divergences: (id: number) => http.get<Divergence[]>(`/tokens/${id}/divergences`),
-  history: (id: number, days: number) => http.get<TokenHistory>(`/tokens/${id}/history?days=${days}`),
+  history: (id: number, days: number) => http.get<TokenHistoryView>(`/tokens/${id}/history?days=${days}`),
   creator: (id: number) => http.get<CreatorView>(`/tokens/${id}/creator`),
 };

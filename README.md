@@ -53,7 +53,7 @@ Cette application regarde ces signaux-là, tous les jours, sans que vous ayez à
 - **Des tests automatisés** sur les points sensibles : l'immuabilité des plans, le calcul des quatre divergences, la validation des adresses.
 - **Une configuration Docker** pour tout lancer en une commande.
 
-### Le scanner de nouveaux tokens (version suivante, en cadrage)
+### Le scanner de nouveaux tokens (livré)
 
 Le module de surveillance suit des tokens que vous avez choisis. Le scanner fait l'inverse : il part des milliers de tokens lancés chaque jour sur Solana et n'en garde qu'une poignée, que vous examinez ensuite à la main dans la vue de surveillance.
 
@@ -64,16 +64,16 @@ Le module de surveillance suit des tokens que vous avez choisis. Le scanner fait
 - **Ce qu'il retient** : chaque résultat est conservé, et le prix de chaque token remonté est relevé à J+1, J+7 et J+30. Une vue « rétrospective » répond à la seule question utile : si j'avais suivi mon scanner, où en serais-je ? Elle affiche la médiane, pas seulement la moyenne, parce qu'un seul gros gain masque cinquante pertes.
 - **Ce qu'il ne fait pas** : pas de classement par performance, pas de « fort potentiel », pas de flux temps réel, pas de bouton d'achat.
 
-Le cadrage complet, avec le schéma de données, les formules de chaque filtre et la justification de chaque seuil, est dans [docs/03-scanner-schema-et-pipeline.md](docs/03-scanner-schema-et-pipeline.md). Le code viendra après validation.
+Le scanner a son écran, avec les résultats, les exclus et leur motif, la rétrospective et ses réglages. Un bouton par ligne ajoute le token à la surveillance. Le cadrage complet, avec le schéma de données, les formules de chaque filtre et la justification de chaque seuil, est dans [docs/03-scanner-schema-et-pipeline.md](docs/03-scanner-schema-et-pipeline.md).
 
-### La veille sur les annonces (livrée) et le panneau de métriques (à suivre)
+### La veille sur les annonces et le panneau de métriques (livrés)
 
 Deux compléments à la vue détaillée d'un token :
 
-- **Le panneau de métriques** affine ce qui existe : quand deux sources donnent un prix différent, l'écart est affiché et signalé au-delà de 2 % ; la capitalisation est montrée trois fois (celle de la source, celle recalculée depuis la blockchain, la valeur totalement diluée) avec l'écart entre elles ; la liquidité est rapportée à la capitalisation et traduite en slippage concret pour trois tailles d'ordre, autrement dit combien vous perdriez en sortant ; les variations sur 5 minutes, 1 heure, 6 heures et 24 heures sont lues ensemble pour dire si le mouvement s'éteint ou s'accélère. Une alerte prioritaire se déclenche quand la liquidité baisse alors que le prix ne bouge pas : c'est le signal qui précède le plus souvent les chutes brutales.
+- **Le panneau de métriques** affine la vue détaillée : quand deux sources donnent un prix différent, l'écart est affiché et signalé au-delà de 2 % ; la capitalisation est montrée trois fois (celle de la source, celle recalculée depuis la blockchain, la valeur totalement diluée) avec l'écart entre elles ; la liquidité est rapportée à la capitalisation et traduite en slippage concret pour trois tailles d'ordre, autrement dit combien vous perdriez en sortant ; les variations sur 5 minutes, 1 heure, 6 heures et 24 heures sont lues ensemble pour dire si le mouvement s'éteint ou s'accélère. Une alerte prioritaire se déclenche quand la liquidité baisse alors que le prix ne bouge pas : c'est le signal qui précède le plus souvent les chutes brutales.
 - **La veille** n'est ni un fil d'actualités ni une mesure de sentiment. C'est un journal horodaté de ce que l'équipe a affirmé, en texte brut jamais reformulé, avec pour chaque affirmation un statut : en attente, tenue, contredite, expirée. Le cœur du module prend une photo du site officiel toutes les 6 heures et compare : si un chiffre de tokenomics change sans qu'aucune annonce ne l'accompagne, vous êtes prévenu. Une frise met face à face ce qui a été dit et ce que les wallets de l'équipe ont réellement fait sur la blockchain. Le contenu promotionnel payé est mis à part et dévalué visuellement.
 
-La veille est accessible depuis la vue détaillée d'un token, bouton « Veille ». Huit onglets : engagements, changements détectés, dire vs faire, actualités, signaux de promotion, sources, wallets équipe, réglages. Pour une page rendue par JavaScript, l'application propose de surveiller directement l'appel JSON que fait la page, ou un rendu par navigateur dans un conteneur séparé.
+Les seuils des trois modules se règlent dans l'écran Réglages, module par module, avec retour aux valeurs par défaut en un clic. La veille est accessible depuis la vue détaillée d'un token, bouton « Veille ». Huit onglets : engagements, changements détectés, dire vs faire, actualités, signaux de promotion, sources, wallets équipe, réglages. Pour une page rendue par JavaScript, l'application propose de surveiller directement l'appel JSON que fait la page, ou un rendu par navigateur dans un conteneur séparé.
 
 Le cadrage complet est dans [docs/04-metriques-marche-et-veille.md](docs/04-metriques-marche-et-veille.md).
 
@@ -101,17 +101,18 @@ Les premiers signaux de divergence apparaissent après deux ou trois jours de re
 | Version | État | Contenu |
 |---|---|---|
 | **0.1.0 — Surveillance** | Livrée le 13 septembre 2026 | Liste de surveillance, vue détaillée en quatre blocs, détection de divergences, journal de discipline immuable, alertes ntfy / Telegram / Discord, vue Système, sources gratuites en priorité avec Solscan en repli, Docker. Cadrage : [docs/01](docs/01-architecture-proposee.md), [docs/02](docs/02-matrice-des-sources.md). |
-| **0.2.0 — Scanner** | Cadrage écrit, en attente de validation | Découverte des nouveaux pools Solana via GeckoTerminal, pipeline de filtrage en cinq étages, drapeaux explicites, onglet des exclus avec motif, réglages éditables, suivi rétrospectif J+1 / J+7 / J+30 avec médiane, alerte rare « zéro drapeau ». Cadrage : [docs/03](docs/03-scanner-schema-et-pipeline.md). |
-| **0.3.0 — Veille sur les annonces** | Livrée le 13 septembre 2026 (partie métriques de marché à suivre en 0.3.1) | Panneau de métriques affiné (écart entre sources, état de dérivée, capitalisation source / recalculée / FDV, ratio liquidité / capitalisation avec slippage estimé, volume par source, trois divergences de plus, alerte retrait de liquidité) et encadré de veille (snapshots du site avec diff automatique, journal d'engagements en texte brut, frise « dire vs faire », actualités tierces séparées et signaux de promotion). Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md). |
-| **0.4.0 — Portefeuille** | Prévue | Valeur du portefeuille Kraken en lecture seule (permission de consultation des soldes uniquement), avec la source de chaque prix. Aucune route d'ordre. |
+| **0.4.0 — Scanner** | Livrée le 14 septembre 2026, avec les propositions par défaut du cadrage | Découverte des nouveaux pools Solana via GeckoTerminal, pipeline de filtrage en cinq étages, drapeaux explicites, onglet des exclus avec motif, réglages éditables, suivi rétrospectif J+1 / J+7 / J+30 avec médiane, alerte rare « zéro drapeau ». Cadrage : [docs/03](docs/03-scanner-schema-et-pipeline.md). |
+| **0.3.0 — Veille sur les annonces** | Livrée le 13 septembre 2026 | Panneau de métriques affiné (écart entre sources, état de dérivée, capitalisation source / recalculée / FDV, ratio liquidité / capitalisation avec slippage estimé, volume par source, trois divergences de plus, alerte retrait de liquidité) et encadré de veille (snapshots du site avec diff automatique, journal d'engagements en texte brut, frise « dire vs faire », actualités tierces séparées et signaux de promotion). Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md). |
+| **0.3.1 — Panneau de métriques de marché** | Livrée le 14 septembre 2026 | État de dérivée (extinction / accélération) sur les fenêtres 6 h, 1 h, 5 min ; écart entre sources avec alerte sur trois relevés ; capitalisation en trois lectures (source, recalculée, FDV) avec écart et détection de substitution ; offre émise nette des burns avec composants séparés ; ratio liquidité / capitalisation avec bandes, liste des pools, slippage estimé par cotation Jupiter ; volume avec source et bandes ; courbes groupées par source ; alerte de retrait de liquidité avec exclusion des migrations ; trois divergences de plus ; réglages versionnés. Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md), partie A. |
+| **0.5.0 — Portefeuille** | Prévue | Valeur du portefeuille Kraken en lecture seule (permission de consultation des soldes uniquement), avec la source de chaque prix. Aucune route d'ordre. |
 | Non planifié | — | Web Push (ntfy couvre le besoin), indicateurs techniques (exclus par principe), multi-utilisateurs (hors périmètre). |
 
 ### Ce que chaque version a tranché
 
 - **0.1.0** : Fastify plutôt que Hono ; deux tables de snapshots (marché toutes les 15 minutes, détenteurs une fois par jour) plutôt qu'une ; Helius gratuit comme palier recommandé ; ntfy comme premier canal ; npm workspaces et `node:sqlite` pour éviter toute compilation native.
-- **0.2.0** : en attente. Points ouverts : GeckoTerminal public en voie principale et clé démo CoinGecko en secours (le plan démo est plafonné à 10 000 appels par mois, insuffisant pour la découverte) ; conservation des exclusions d'étage 2 limitée aux cas proches ; trois drapeaux supplémentaires à coût nul ; alerte zéro drapeau conditionnée à la vérification du créateur ; cadence des paliers de re-vérification ; formule de décélération.
-- **0.3.0** : tranché le 13 septembre 2026 : slippage réel via Jupiter Quote avec cache 60 s et repli limité aux pools à produit constant ; « offre émise nette des burns » avec composants séparés, jamais « offre en circulation » ; sites rendus côté client couverts dès la v1 par trois modes (HTML, API JSON découverte, rendu sans tête dans un conteneur séparé) ; sévérité d'un changement selon sa nature, « non annoncé » comme drapeau additionnel à 48 h ; réglages communs aux trois modules avec défauts versionnés et remise à zéro par module ; Discord et Telegram reportés en entrée seulement, Telegram reste le canal de notification. Encore ouverts : tolérance de l'état de dérivée, X via oEmbed et saisie manuelle, sources d'actualités, wallets équipe.
-- **0.4.0** : Kraken reporté volontairement pour livrer d'abord l'observation on-chain, qui est le cœur de l'outil.
+- **0.2.0 → livrée en 0.4.0** avec les propositions par défaut, faute d'avis contraire : GeckoTerminal public en voie principale et clé démo CoinGecko en secours (le plan démo est plafonné à 10 000 appels par mois, insuffisant pour la découverte) ; conservation des exclusions d'étage 2 limitée aux cas proches ; trois drapeaux supplémentaires à coût nul ; alerte zéro drapeau conditionnée à la vérification du créateur ; cadence des paliers de re-vérification ; formule de décélération.
+- **0.3.0 et 0.3.1** : tranché le 13 septembre 2026 : slippage réel via Jupiter Quote avec cache 60 s et repli limité aux pools à produit constant ; « offre émise nette des burns » avec composants séparés, jamais « offre en circulation » ; sites rendus côté client couverts dès la v1 par trois modes (HTML, API JSON découverte, rendu sans tête dans un conteneur séparé) ; sévérité d'un changement selon sa nature, « non annoncé » comme drapeau additionnel à 48 h ; réglages communs aux trois modules avec défauts versionnés et remise à zéro par module ; Discord et Telegram reportés en entrée seulement, Telegram reste le canal de notification. Encore ouverts : tolérance de l'état de dérivée, X via oEmbed et saisie manuelle, sources d'actualités, wallets équipe.
+- **0.5.0** : Kraken reporté volontairement pour livrer d'abord l'observation on-chain, qui est le cœur de l'outil.
 
 ---
 
@@ -190,7 +191,7 @@ La réponse indique le palier détecté (A, B ou C) et, pour chaque donnée, la 
 npm test
 ```
 
-Quarante-six tests : immuabilité des plans et des engagements, règles de divergence, moteur de diff (normalisation, appariement, lignes volatiles, robots.txt, JSON), pipeline de veille complet sur un site local, vérification automatique des engagements, réglages versionnés.
+Soixante-dix-neuf tests : immuabilité des plans et des engagements, sept règles de divergence, moteur de diff (normalisation, appariement, lignes volatiles, robots.txt, JSON), pipeline de veille complet sur un site local, vérification automatique des engagements, réglages versionnés, métriques de marché (état de dérivée, écart de prix, capitalisation, bandes, slippage, retrait de liquidité et migrations, intégrité des courbes), pipeline du scanner avec jeux de données figés (normalisation, cinq étages, tri, paliers, rétrospective).
 
 ---
 
@@ -217,7 +218,9 @@ Quarante-six tests : immuabilité des plans et des engagements, règles de diver
 | `HELIUS_MAX_HOLDER_PAGES` | `200` | Plafond de pages (1000 comptes chacune) par snapshot détenteurs |
 | `SOLSCAN_API_KEY` | vide | Clé Solscan Pro, envoyée dans le header `token`. Jamais côté navigateur. |
 | `SOLSCAN_MONTHLY_CU_BUDGET` | `1000000` | Budget mensuel : au-delà de 80 %, snapshots Solscan un jour sur deux |
-| `DEXSCREENER_BASE_URL`, `JUPITER_PRICE_URL`, `RUGCHECK_BASE_URL` | URLs publiques | Surcharge pour test uniquement |
+| `DEXSCREENER_BASE_URL`, `JUPITER_PRICE_URL`, `JUPITER_QUOTE_URL`, `RUGCHECK_BASE_URL` | URLs publiques | Surcharge pour test uniquement |
+| `GECKOTERMINAL_BASE_URL` | API publique | Voie principale du scanner, sans clé |
+| `COINGECKO_DEMO_API_KEY` | vide | Optionnel, voie de secours du scanner quand la voie publique est limitée. 10 000 crédits par mois. |
 | `CRON_MARKET_SNAPSHOT` | `*/15 * * * *` | Prix, volume, offre (sources gratuites) |
 | `CRON_HOLDER_SNAPSHOT` | `0 6 * * *` | Détenteurs et concentration, une fois par jour |
 | `CRON_ALERT_EVAL` | `* * * * *` | Évaluation des alertes |
@@ -250,6 +253,10 @@ Quarante-six tests : immuabilité des plans et des engagements, règles de diver
 | Snapshots de pages (veille) | 6 h par source, en-têtes conditionnels | Site officiel, HTML / API JSON / rendu sans tête |
 | Actualités (veille) | 1 h | RSS Google News, CryptoPanic, flux d'exchanges |
 | Actions on-chain équipe (veille) | 15 min | Helius Enhanced Transactions |
+| Slippage (cotation Jupiter) | 60 s par couple token / taille, un point par jour en historique | Jupiter Quote, formule x·y = k en repli sur pool à produit constant |
+| Scanner : découverte | 5 min | GeckoTerminal nouveaux pools (48 h) + tendances |
+| Scanner : re-vérification | 15 min chaud, 2 h tiède, 24 h froid | GeckoTerminal multi-pools, 30 adresses par appel |
+| Scanner : enrichissement | RPC 24 h, info token 6 h, créateur 7 j | RPC, GeckoTerminal, Helius DAS |
 
 Le cache est en mémoire et recopié dans la table `cache_entries` : un redémarrage ne rebrûle aucun quota. Le polling frontend (TanStack Query, `staleTime` aligné sur ces TTL) n'interroge que le backend.
 

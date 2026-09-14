@@ -10,7 +10,9 @@ const { toasts } = storeToRefs(store);
     <router-link to="/" style="color:inherit"><strong>Surveillance Solana</strong> <span class="faint small">observe, historise, alerte — n’exécute rien</span></router-link>
     <nav>
       <router-link to="/">Liste</router-link>
+      <router-link to="/scanner">Scanner</router-link>
       <router-link to="/alerts">Alertes</router-link>
+      <router-link to="/settings">Réglages</router-link>
       <router-link to="/system">Système</router-link>
     </nav>
   </header>

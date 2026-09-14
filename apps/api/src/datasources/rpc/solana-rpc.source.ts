@@ -53,12 +53,19 @@ export class SolanaRpcSource {
     const extensions: string[] = Array.isArray(info.extensions)
       ? info.extensions.map((e: { extension?: string }) => e.extension ?? 'unknown')
       : [];
+    let transferFeeBps: number | null = null;
+    if (Array.isArray(info.extensions)) {
+      const fee = info.extensions.find((e: { extension?: string }) => e.extension === 'transferFeeConfig');
+      const bps = Number(fee?.state?.newerTransferFee?.transferFeeBasisPoints ?? fee?.state?.olderTransferFee?.transferFeeBasisPoints);
+      if (Number.isFinite(bps)) transferFeeBps = bps;
+    }
     return {
       address: mint, program, decimals, supplyRaw,
       supply: Number(supplyRaw) / 10 ** decimals,
       mintAuthority: info.mintAuthority ?? null,
       freezeAuthority: info.freezeAuthority ?? null,
       extensions,
+      transferFeeBps,
     };
   }
 
@@ -66,6 +73,19 @@ export class SolanaRpcSource {
     const r = await this.call<{ value: { amount: string; decimals: number; uiAmount: number | null } }>('getTokenSupply', [mint, { commitment: 'confirmed' }]);
     const decimals = r.value.decimals;
     return { supply: Number(r.value.amount) / 10 ** decimals, decimals, source: 'rpc' };
+  }
+
+  /** Solde total d'un mint détenu par un propriétaire (somme de ses comptes token). */
+  async getOwnerTokenBalance(owner: string, mint: string, decimals: number): Promise<number> {
+    const r = await this.call<{ value: { account: { data: { parsed?: { info?: { tokenAmount?: { amount?: string } } } } } }[] }>(
+      'getTokenAccountsByOwner', [owner, { mint }, { encoding: 'jsonParsed', commitment: 'confirmed' }],
+    );
+    let total = 0n;
+    for (const acc of r.value ?? []) {
+      const raw = acc.account?.data?.parsed?.info?.tokenAmount?.amount;
+      if (raw) total += BigInt(raw);
+    }
+    return Number(total) / 10 ** decimals;
   }
 
   /** Top 20 comptes token, propriétaires résolus. */
@@ -123,8 +143,11 @@ export class SolanaRpcSource {
       if (meta) {
         name = meta.name || null;
         symbol = meta.symbol || null;
-        const verified = meta.creators.find((c) => c.verified);
-        creator = verified?.address ?? meta.creators[0]?.address ?? meta.updateAuthority ?? null;
+        // Une adresse nulle (programme système) n'est pas un créateur : métadonnées immuables ou slot vide.
+        const real = (a: string | undefined): string | null => (a && a !== SYSTEM_PROGRAM ? a : null);
+        const creators = meta.creators.filter((c) => real(c.address));
+        const verified = creators.find((c) => c.verified);
+        creator = real(verified?.address) ?? real(creators[0]?.address) ?? real(meta.updateAuthority);
       }
     }
     // La PDA de métadonnées a très peu de transactions : sa plus ancienne signature ≈ création du token.

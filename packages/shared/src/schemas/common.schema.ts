@@ -7,6 +7,8 @@ export const SourceName = z.enum([
   'jupiter',
   'rugcheck',
   'solscan',
+  'geckoterminal',
+  'coingecko',
   'local',
   'unavailable',
 ]);

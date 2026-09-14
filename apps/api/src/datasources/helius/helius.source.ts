@@ -55,6 +55,16 @@ export class HeliusSource {
     return { holders, totalHolders: truncated ? null : holders.length, truncated, source: 'helius', cuSpent: 0 };
   }
 
+  /** Nombre de tokens fongibles créés par une adresse (DAS searchAssets), plafonné à 1000. */
+  async countFungibleByCreator(creator: string): Promise<number> {
+    const body = JSON.stringify({ jsonrpc: '2.0', id: this.id++, method: 'searchAssets', params: { creatorAddress: creator, tokenType: 'fungible', limit: 1000, page: 1 } });
+    const res = await fetchJson<{ result?: { items?: unknown[]; total?: number }; error?: { message: string } }>(
+      this.deps, 'helius', 'searchAssets', this.rpcUrl, { method: 'POST', headers: { 'content-type': 'application/json' }, body },
+    );
+    if (res.error) throw new Error(`Helius searchAssets : ${res.error.message}`);
+    return res.result?.items?.length ?? res.result?.total ?? 0;
+  }
+
   /** Transactions parsées d'un wallet (API Enhanced Transactions). */
   async getAddressActivities(address: string, tokenMint: string, limit = 100): Promise<CreatorActivity[]> {
     if (!this.apiKey) throw new Error('HELIUS_API_KEY absent');

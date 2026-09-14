@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue';
+import { computed, ref, toRef } from 'vue';
 import { ApiHttpError } from '@/api/http';
 import CreatorCard from '@/components/token/CreatorCard.vue';
 import DivergencePanel from '@/components/token/DivergencePanel.vue';
 import HolderConcentrationCard from '@/components/token/HolderConcentrationCard.vue';
+import LiquidityCard from '@/components/token/LiquidityCard.vue';
 import MarketCard from '@/components/token/MarketCard.vue';
 import StructuralHealthCard from '@/components/token/StructuralHealthCard.vue';
 import SupplyCard from '@/components/token/SupplyCard.vue';
 import QueryState from '@/components/shared/QueryState.vue';
 import { fmtDate, shortAddr } from '@/composables/useFormat';
-import { useCreator, useDivergences, useHealth, useHolders, useMarket, useSupply, useToken, useTokenRefresh } from '@/queries/useTokenDetail';
+import { useCreator, useDivergences, useHealth, useHistory, useHolders, useMarket, useSupply, useToken, useTokenRefresh } from '@/queries/useTokenDetail';
 import { usePlans } from '@/queries/usePlans';
 import { useNotificationsStore } from '@/stores/notifications.store';
 
@@ -23,6 +24,7 @@ const holders = useHolders(id);
 const divergences = useDivergences(id);
 const creator = useCreator(id);
 const plans = usePlans(id);
+const history = useHistory(id, ref(30));
 const refresh = useTokenRefresh(id);
 const notify = useNotificationsStore();
 const t = computed(() => token.data.value?.data);
@@ -65,6 +67,7 @@ async function refreshHealth() {
         <div class="stack" style="gap:1rem">
           <QueryState :loading="market.isLoading.value" :error="market.error.value" />
           <MarketCard v-if="market.data.value" :market="market.data.value.data" />
+          <LiquidityCard v-if="market.data.value" :token-id="t.id" :market="market.data.value.data" :ratio-history="history.data.value?.data.series.liquidityRatio ?? []" />
           <QueryState :loading="supply.isLoading.value" :error="supply.error.value" />
           <SupplyCard v-if="supply.data.value" :supply="supply.data.value.data" />
         </div>

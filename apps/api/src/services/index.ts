@@ -1,3 +1,4 @@
+import type { ScannerSettings } from '@tpm/shared';
 import type { Env } from '../config/env.js';
 import type { Db } from '../db/client.js';
 import { AlertService } from './alert.service.js';
@@ -10,6 +11,8 @@ import { MarketService } from './market.service.js';
 import { buildNotifierHub } from './notify/index.js';
 import { PlanService } from './plan.service.js';
 import { SettingsService } from './settings.service.js';
+import { SlippageService } from './slippage.service.js';
+import { ScannerService } from './scanner.service.js';
 import { SupplyService } from './supply.service.js';
 import { SystemService } from './system.service.js';
 import { TokenService } from './token.service.js';
@@ -32,6 +35,8 @@ export interface Services {
   creator: CreatorService;
   system: SystemService;
   settings: SettingsService;
+  slippage: SlippageService;
+  scanner: ScannerService;
   watchPages: WatchPageService;
   claims: ClaimsService;
   news: NewsService;
@@ -48,18 +53,26 @@ export const JOB_SCHEDULES = (env: Env): Record<string, string> => ({
   'watch-onchain': '*/15 * * * *',
   'watch-review': '30 * * * *',
   'watch-maintenance': '0 4 * * *',
+  'market-slippage': '0 7 * * *',
+  'scan-discover': '*/5 * * * *',
+  'scan-evaluate': '2-59/5 * * * *',
+  'scan-retro': '15 * * * *',
+  'scan-maintenance': '30 3 * * *',
 });
 
 export function buildServices(env: Env, db: Db, log: Logger): Services {
   const ctx = new AppContext(env, db, log);
   const tokens = new TokenService(ctx);
-  const market = new MarketService(ctx, tokens);
+  const settings = new SettingsService(ctx);
+  const market = new MarketService(ctx, tokens, settings);
   const divergences = new DivergenceService(ctx, tokens);
   const hub = buildNotifierHub(env);
-  const alerts = new AlertService(ctx, tokens, market, divergences, hub);
-  const settings = new SettingsService(ctx);
+  const alerts = new AlertService(ctx, tokens, market, divergences, hub, settings);
+  ctx.sources.scannerRateCfg = () => settings.get<ScannerSettings>('scanner').rateLimit;
   return {
     ctx, tokens, market, divergences, alerts, settings,
+    slippage: new SlippageService(ctx, tokens, market, settings),
+    scanner: new ScannerService(ctx, settings, alerts),
     health: new HealthService(ctx, tokens),
     supply: new SupplyService(ctx, tokens),
     holders: new HoldersService(ctx, tokens, market),

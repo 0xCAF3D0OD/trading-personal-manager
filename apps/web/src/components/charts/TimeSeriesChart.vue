@@ -4,7 +4,7 @@ import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
 export interface ChartSeries { label: string; points: { ts: number; value: number | null }[]; unit?: string; color?: string }
-const props = defineProps<{ series: ChartSeries[]; height?: number; percent?: boolean }>();
+const props = defineProps<{ series: ChartSeries[]; height?: number; percent?: boolean; singleAxis?: boolean }>();
 
 const el = ref<HTMLDivElement | null>(null);
 let plot: uPlot | null = null;
@@ -41,11 +41,11 @@ function build() {
     width, height: props.height ?? 200,
     cursor: { drag: { x: true, y: false } },
     legend: { show: true },
-    scales: { x: { time: true }, y: { auto: true }, ...(props.series.length > 1 ? { y2: { auto: true } } : {}) },
+    scales: { x: { time: true }, y: { auto: true }, ...(props.series.length > 1 && !props.singleAxis ? { y2: { auto: true } } : {}) },
     axes: [
       { stroke: cssVar('--text-faint'), grid: { stroke: cssVar('--border'), width: 1 }, ticks: { stroke: cssVar('--border') } },
       { stroke: colors[0], grid: { stroke: cssVar('--border'), width: 1 }, size: 64, values: (_u, vals) => vals.map((v) => fmtVal(v)) },
-      ...(props.series.length > 1
+      ...(props.series.length > 1 && !props.singleAxis
         ? [{ side: 1, scale: 'y2', stroke: colors[1], grid: { show: false }, size: 64, values: (_u: uPlot, vals: number[]) => vals.map((v) => fmtVal(v)) } as uPlot.Axis]
         : []),
     ],
@@ -55,7 +55,7 @@ function build() {
         label: s.label,
         stroke: s.color ?? colors[i % colors.length],
         width: 2,
-        scale: i === 0 ? 'y' : 'y2',
+        scale: i === 0 || props.singleAxis ? 'y' : 'y2',
         spanGaps: true,
         points: { show: xs.length < 40 },
         value: (_u: uPlot, v: number | null) => fmtVal(v, s.unit),

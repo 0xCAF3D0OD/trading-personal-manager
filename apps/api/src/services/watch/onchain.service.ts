@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { nowS } from '../../db/client.js';
+import { SYSTEM_PROGRAM } from '../../datasources/rpc/solana-rpc.source.js';
 import { classifyHeliusTx } from '../../watch/onchain-classify.js';
 import type { AlertService } from '../alert.service.js';
 import { AppContext, NotFoundError, ValidationError } from '../context.js';
@@ -39,8 +40,10 @@ export class OnchainWatchService {
 
   wallets(tokenId: number): TeamWallet[] {
     const t = this.tokens.require(tokenId);
-    if (t.creator_address) this.ctx.team.ensureWallet(tokenId, t.creator_address, 'creator', 'auto', 'Créateur résolu automatiquement');
-    return this.ctx.team.wallets(tokenId);
+    if (t.creator_address && isSolanaAddress(t.creator_address) && t.creator_address !== SYSTEM_PROGRAM) {
+      this.ctx.team.ensureWallet(tokenId, t.creator_address, 'creator', 'auto', 'Créateur résolu automatiquement');
+    }
+    return this.ctx.team.wallets(tokenId).filter((w) => isSolanaAddress(w.address) && w.address !== SYSTEM_PROGRAM);
   }
 
   addWallet(tokenId: number, input: CreateTeamWalletInput): TeamWallet[] {
