@@ -37,7 +37,19 @@ const keptRows = computed(() => (results.data.value?.data ?? []).filter((r) =>
   && (minPct24.value === 0 || (r.metrics.pctH24 !== null && r.metrics.pctH24 >= minPct24.value))
   && (minLiq.value === 0 || (r.metrics.liquidityUsd !== null && r.metrics.liquidityUsd >= minLiq.value))
   && (!cleanOnly.value || (r.flagCount === 0 && r.unverifiedCount === 0))));
-const excludedRows = computed(() => (excluded.data.value?.data ?? []).filter((r) => stage2Only.value === 'all' || r.excludedStage === stage2Only.value));
+/** Mêmes filtres de lecture pour les exclus, plus le motif d'exclusion. */
+const reasonCode = ref<string>('all');
+const reasonOptions = computed(() => {
+  const m = new Map<string, string>();
+  for (const r of excluded.data.value?.data ?? []) for (const e of r.exclusionReasons) m.set(e.code, e.label);
+  return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+});
+const excludedRows = computed(() => (excluded.data.value?.data ?? []).filter((r) =>
+  (stage2Only.value === 'all' || r.excludedStage === stage2Only.value)
+  && (reasonCode.value === 'all' || r.exclusionReasons.some((e) => e.code === reasonCode.value))
+  && (maxAgeH.value === 0 || (r.metrics.ageHours !== null && r.metrics.ageHours <= maxAgeH.value))
+  && (minPct24.value === 0 || (r.metrics.pctH24 !== null && r.metrics.pctH24 >= minPct24.value))
+  && (minLiq.value === 0 || (r.metrics.liquidityUsd !== null && r.metrics.liquidityUsd >= minLiq.value))));
 async function runNow() {
   try { const r = await run.mutateAsync(); notify.push('success', `Découverte : ${r.data.discover.inserted} nouveau(x) pool(s). Évaluation : ${r.data.evaluate}`, 9000); }
   catch (e) { notify.push('error', e instanceof ApiHttpError ? e.message : String(e), 9000); }
@@ -89,10 +101,16 @@ async function runNow() {
       <p class="small muted">Pour vérifier que les filtres ne sont pas trop agressifs. Étage 2 : seuls les cas qui avaient le +100 % mais ont échoué ailleurs sont conservés ({{ exDays }} jours). Étage 3 : tous.</p>
       <div class="row small">
         <select v-model="stage2Only" style="width:auto"><option value="all">Tous les étages</option><option :value="2">Étage 2 (performance)</option><option :value="3">Étage 3 (structurel)</option></select>
+        <select v-model="reasonCode" style="width:auto"><option value="all">Tous les motifs</option><option v-for="[code, label] in reasonOptions" :key="code" :value="code">{{ label }}</option></select>
+        <select v-model.number="maxAgeH" style="width:auto"><option :value="0">Tout âge</option><option :value="24">Récent : moins de 24 h</option><option :value="72">Moins de 3 jours</option><option :value="168">Moins de 7 jours</option></select>
+        <select v-model.number="minPct24" style="width:auto"><option :value="0">Toute variation</option><option :value="100">Forte : ≥ +100 % / 24 h</option><option :value="200">Très forte : ≥ +200 %</option><option :value="500">Extrême : ≥ +500 %</option></select>
+        <select v-model.number="minLiq" style="width:auto"><option :value="0">Toute liquidité</option><option :value="50000">Liquidité ≥ 50 k$</option><option :value="200000">≥ 200 k$</option><option :value="1000000">≥ 1 M$</option></select>
+        <span v-if="excluded.data.value" class="faint">{{ excludedRows.length }} / {{ excluded.data.value.data.length }}</span>
         <template v-if="o?.lastRun && Object.keys(o.lastRun.stage2Reasons).length"><span class="muted">Dernier passage, motifs d’exclusion à l’étage 2 :</span><span v-for="(n, code) in o.lastRun.stage2Reasons" :key="code" class="badge neutral">{{ SCAN_STAGE2_REASONS[code] ?? code }} : {{ n }}</span></template>
       </div>
       <QueryState :loading="excluded.isLoading.value" :error="excluded.error.value" />
-      <div v-if="excluded.data.value && !excludedRows.length" class="empty">Aucune exclusion enregistrée.</div>
+      <div v-if="excluded.data.value && !excluded.data.value.data.length" class="empty">Aucune exclusion enregistrée.</div>
+      <div v-else-if="excluded.data.value && !excludedRows.length" class="empty">Aucun exclu ne correspond à ces critères. Élargissez un filtre.</div>
       <ScanResultsTable v-else-if="excluded.data.value" :rows="excludedRows" mode="excluded" :detail="detail" />
     </template>
 
