@@ -45,7 +45,12 @@ export type SupplyComponents = z.infer<typeof SupplyComponents>;
 
 export const SlippageEstimate = z.object({
   orderUsd: z.number(),
+  /** Perte effective : (ordre − reçu) / ordre, frais inclus, ou approximation x·y = k. */
   impactPct: z.number().nullable(),
+  /** Ce que la cotation rend en dollars (USDC), quand Jupiter a répondu. */
+  receivedUsd: z.number().nullable(),
+  /** L'« impact » annoncé par Jupiter, informatif seulement : il est souvent nul ou grossier. */
+  quotedImpactPct: z.number().nullable(),
   method: z.enum(['jupiter_quote', 'constant_product', 'unavailable']),
   route: z.array(z.string()),
   note: z.string(),
@@ -90,7 +95,9 @@ export const MarketMetricsView = z.object({
     source: SourceName,
   }),
   volume: z.object({
+    /** Volume 24 h de tous les pools connus du token (somme), pas seulement du pool principal. */
     h24Usd: z.number().nullable(),
+    mainPoolH24Usd: z.number().nullable(),
     source: SourceName,
     toMcap: z.number().nullable(),
     band: VolumeBand.nullable(),

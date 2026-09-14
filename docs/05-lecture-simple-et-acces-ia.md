@@ -37,6 +37,17 @@ Bloc unique en tête de fiche. Cinq lignes, une question, une réponse en mots, 
 | 4 | Que fait l'équipe ? | Actions on-chain des portefeuilles équipe sur 30 jours, engagements échus tenus ou non (Veille) | « Rien de notable sur 30 jours, 2 engagements tenus sur 2. » / « Le créateur a vendu trois fois en 30 jours ; 1 engagement non tenu. » / « Créateur non identifiable, aucun portefeuille déclaré. » |
 | 5 | Le marché confirme-t-il l'histoire ? | Divergences déclenchées (panneau Divergences) | « Aucune contradiction entre prix, volume, liquidité et détenteurs. » / « 2 contradictions : le prix monte alors que le volume baisse ; la liquidité se retire. » |
 
+Corrections du 14 septembre 2026, après relecture d'un rapport produit par l'IA sur un vrai dossier (retour de Kevin) :
+
+- **Le coût réel de la sortie prime sur le ratio.** Un ratio « confortable » avec 77 % de perte à la vente n'est plus « sans mal » : au-delà de 3 % de perte la question 2 passe à « à surveiller », au-delà de 10 % à « risque » (mêmes seuils que la coloration de la carte Liquidité). Le slippage lui-même est désormais la **perte effective** lue dans ce que la cotation Jupiter rend (ordre − reçu, frais inclus) : le champ « impact » de Jupiter est souvent nul ou grossier. Quand la route rend bien moins que ne le laisse attendre le pool principal, la note le dit et demande de recouper.
+- **Le volume est celui du token, pas du pool principal** : somme des pools connus, le pool principal indiqué à part. Le ratio volume / capitalisation et sa bande suivent.
+- **La jeunesse du token remonte dans les questions 1 et 3** (même seuil que la carte Santé : moins de 7 jours) : un token jeune n'est jamais « sain » tout court, et une répartition régulière des détenteurs sur un token de quelques jours est contextualisée (portefeuilles créés en série possibles).
+- **Le verrou de liquidité** est dit dans la question 2 (part verrouillée, protocole, date de déverrouillage inconnue), et la capitalisation y est qualifiée : égale à la FDV.
+- **Le mouvement de prix du jour est dit** dans la question 5, qui passe à « à surveiller » au-delà de ±30 % sur 24 h même sans contradiction.
+- **Arrondis** : le top 10 est donné à une décimale, comme dans la carte.
+- **Libellé de dérivée** : « Baisse régulière, sans accélération » ou « Hausse régulière, sans accélération » quand toutes les fenêtres vont dans le même sens sans monotonie ; « Sans tendance nette » seulement quand les sens sont mêlés.
+- **Le dossier** dit que les états sont posés par l'outil (pas de total, l'IA n'en produit pas d'autre), affiche l'âge de chaque relevé et l'écart entre le plus ancien et le plus récent, et classe « non calculable » une divergence dont les deux séries sont vides au lieu de « au repos ».
+
 Règles :
 
 - **La finalité est écrite** : au-dessus des cinq questions, une phrase fixe (« Personne ne peut dire si ce token vous rapportera. Ces cinq questions disent ce qui peut vous faire perdre, et chacune est vérifiable. »), et sous chaque question une ligne « à quoi ça sert » rapportée à l'argent du lecteur (`SUMMARY_PURPOSE`, partagée avec les cartes). Demandé par Kevin le 14 septembre 2026 : le visiteur doit savoir à quoi sert chaque information.

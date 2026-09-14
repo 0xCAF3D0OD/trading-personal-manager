@@ -25,6 +25,8 @@ export class SummaryService {
     const now = nowS();
 
     const h = this.ctx.health.get(tokenId);
+    // Même seuil que la carte Santé structurelle : moins de 7 jours = trop jeune pour un historique.
+    const ageDays = token.created_at ? Math.floor((now - token.created_at) / 86400) : null;
     let extensions: string[] = [];
     try { extensions = h ? (JSON.parse(h.token2022_extensions) as string[]) : []; } catch { extensions = []; }
 
@@ -49,10 +51,10 @@ export class SummaryService {
     const divs = this.divergences.compute(tokenId);
 
     const inputs: SummaryInputs = {
-      health: h ? { mintAuthority: h.mint_authority, freezeAuthority: h.freeze_authority, extensions, checkedAt: h.checked_at } : null,
+      health: h ? { mintAuthority: h.mint_authority, freezeAuthority: h.freeze_authority, extensions, checkedAt: h.checked_at, ageDays, young: ageDays !== null && ageDays < 7, lpLocked: h.lp_locked === null ? null : h.lp_locked === 1, lpLockedPct: h.lp_locked_pct, lpLockProtocol: h.lp_lock_protocol } : null,
       liquidity: m ? { ratioPct: ratio, band: band.band, totalUsd: liqAll, poolsCount: m.poolsCount ?? (m.liquidityUsd !== null ? 1 : 0), ts: m.ts, source: m.liquiditySource ?? m.priceSource } : null,
       slippage: slip ? { orderUsd: slip.orderUsd, impactPct: slip.impactPct, ts: slip.ts } : null,
-      holders: latestHolders ? { top10Pct: latestHolders.top10Pct, holderCount: latestHolders.holderCount, truncated: latestHolders.truncated, ts: latestHolders.ts, source: latestHolders.source, fullTierMissing } : null,
+      holders: latestHolders ? { top10Pct: latestHolders.top10Pct, holderCount: latestHolders.holderCount, truncated: latestHolders.truncated, ts: latestHolders.ts, source: latestHolders.source, fullTierMissing, ageDays } : null,
       team: {
         creatorKnown: creatorKnown || wallets.some((w) => w.label === 'creator'), walletsCount: wallets.length,
         actionsAvailable: !!this.ctx.sources.helius?.enhancedAvailable,
@@ -66,6 +68,7 @@ export class SummaryService {
         triggered: divs.filter((d) => d.status === 'triggered').map((d) => d.label),
         evaluated: divs.length, insufficient: divs.filter((d) => d.status === 'insufficient_data').length,
         computedAt: divs[0]?.computedAt ?? null,
+        priceChange24hPct: m?.pctH24 ?? null,
       },
     };
     return { tokenId, answers: buildSummary(inputs, ui), computedAt: now };

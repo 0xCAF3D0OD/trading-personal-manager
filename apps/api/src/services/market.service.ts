@@ -128,7 +128,9 @@ export class MarketService {
     const totalRatioPct = totalLiq !== null && mcapLocal !== null && mcapLocal > 0 ? (totalLiq / mcapLocal) * 100 : null;
     const tlb = liquidityBand(totalRatioPct, cfg.liquidityBands);
 
-    const vol = d.pair?.volume24hUsd ?? null;
+    // Volume du token = somme des pools connus, pas seulement le principal : un pool sur trois peut porter la moitié du volume.
+    const mainVol = d.pair?.volume24hUsd ?? null;
+    const vol = pools.length ? pools.reduce((n, p) => n + (p.volumeH24Usd ?? 0), 0) : mainVol;
     const volToMcap = vol !== null && mcapLocal !== null && mcapLocal > 0 ? vol / mcapLocal : null;
     const vb = volumeBand(volToMcap, cfg.volumeBands);
     const volSource: SourceName = d.pair ? 'dexscreener' : 'unavailable';
@@ -151,7 +153,7 @@ export class MarketService {
         mcap: { sourceValue: sourceMcap, sourceName: d.pair ? 'dexscreener' : 'unavailable', sourceIsFdv, local: mcapLocal, fdvLocal, fdvSource: d.pair?.fdvUsd ?? null, gapPct: gap, gapWarn: gap !== null && Math.abs(gap) > cfg.mcapGapWarnPct },
         supply: sc,
         liquidity: { mainPoolUsd: mainLiq, totalUsd: totalLiq, poolsCount: pools.length, ratioPct, band: lb.band, bandLabel: lb.label, totalRatioPct, totalBand: tlb.band, totalBandLabel: tlb.label, pools, source: d.pair ? 'dexscreener' : 'unavailable' },
-        volume: { h24Usd: vol, source: volSource, toMcap: volToMcap, band: vb.band, bandLabel: vb.label, ratioChange24hPct: ratioChange(86400), ratioChange7dPct: ratioChange(7 * 86400) },
+        volume: { h24Usd: vol, mainPoolH24Usd: mainVol, source: volSource, toMcap: volToMcap, band: vb.band, bandLabel: vb.label, ratioChange24hPct: ratioChange(86400), ratioChange7dPct: ratioChange(7 * 86400) },
         pair: d.pair ? { dexId: d.pair.dexId, pairAddress: d.pair.pairAddress, url: d.pair.url, createdAt: d.pair.pairCreatedAt } : null,
         source: usedSource,
         fetchedAt: d.pair ? d.pairFetchedAt : d.jupiterFetchedAt,

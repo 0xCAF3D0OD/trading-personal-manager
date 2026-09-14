@@ -53,7 +53,7 @@ const simpleText = computed(() => {
         <span v-if="mainSize">
           Vendre {{ fmtUsd(mainSize.orderUsd) }} coûterait
           <strong :class="mainSize.impactPct === null ? 'faint' : mainSize.impactPct > 10 ? 'down' : mainSize.impactPct > 3 ? 'warning' : ''">{{ mainSize.impactPct === null ? 'un montant non estimable' : `${mainSize.impactPct.toFixed(2)} %` }}</strong>
-          de <Terme mot="slippage">slippage</Terme> <span class="faint small">({{ mainSize.method === 'jupiter_quote' ? 'simulation Jupiter' : mainSize.method === 'constant_product' ? 'formule x·y = k' : 'indisponible' }} · {{ timeAgo(mainSize.fetchedAt) }})</span>
+          de <Terme mot="slippage">slippage</Terme><template v-if="mainSize.receivedUsd !== null"> : vous recevriez {{ fmtUsd(mainSize.receivedUsd) }}, frais inclus</template> <span class="faint small">({{ mainSize.method === 'jupiter_quote' ? 'simulation Jupiter' : mainSize.method === 'constant_product' ? 'formule x·y = k' : 'indisponible' }} · {{ timeAgo(mainSize.fetchedAt) }})</span>
         </span>
       </template>
     </div>
@@ -80,17 +80,18 @@ const simpleText = computed(() => {
       <template v-if="showSlippage && sizes.length">
         <h3 style="margin-top:1rem">Slippage par taille d’ordre</h3>
         <table>
-          <thead><tr><th class="num">Ordre</th><th class="num">Impact</th><th>Méthode</th><th>Route</th></tr></thead>
+          <thead><tr><th class="num">Ordre</th><th class="num">Perte effective</th><th class="num">Reçu</th><th>Méthode</th><th>Route</th></tr></thead>
           <tbody>
             <tr v-for="s in sizes" :key="s.orderUsd">
               <td class="num">{{ fmtUsd(s.orderUsd) }}</td>
               <td class="num" :class="s.impactPct === null ? 'faint' : s.impactPct > 10 ? 'down' : s.impactPct > 3 ? 'warning' : ''">{{ s.impactPct === null ? 'indisponible' : `${s.impactPct.toFixed(2)} %` }}</td>
+              <td class="num small">{{ s.receivedUsd === null ? '—' : fmtUsd(s.receivedUsd) }}</td>
               <td class="small">{{ s.method === 'jupiter_quote' ? 'Jupiter (simulation de route)' : s.method === 'constant_product' ? 'formule x·y = k (approximation)' : '—' }}</td>
               <td class="small faint">{{ s.route.join(' → ') }}</td>
             </tr>
           </tbody>
         </table>
-        <p class="faint small">{{ sizes[0]?.note }}</p>
+        <p v-for="n in [...new Set(sizes.map((s) => s.note))]" :key="n" class="faint small">{{ n }}</p>
       </template>
 
       <h3 style="margin-top:1rem">Historique du ratio liquidité / capitalisation</h3>
