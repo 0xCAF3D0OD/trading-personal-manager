@@ -26,20 +26,27 @@ export class DexScreenerSource {
     return out;
   }
 
-  /** Toutes les paires de chaque mint, triées par liquidité décroissante : sert à mesurer la fragmentation. */
+  /**
+   * Toutes les paires de chaque mint, triées par liquidité décroissante : sert à mesurer la fragmentation.
+   * `tokens/v1` ne renvoie que la meilleure paire par token : il faut `token-pairs/v1` (jusqu'à 30 pools), un appel par mint.
+   * La liste de surveillance est personnelle (quelques tokens) : un appel par token reste loin de la limite DexScreener.
+   */
   async getAllPairs(mints: string[]): Promise<Map<string, PairInfo[]>> {
     const out = new Map<string, PairInfo[]>();
-    for (let i = 0; i < mints.length; i += 30) {
-      const chunk = mints.slice(i, i + 30);
-      const pairs = await fetchJson<DsPair[] | { pairs?: DsPair[] }>(
-        this.deps, 'dexscreener', 'tokens/v1', `${this.baseUrl}/tokens/v1/solana/${chunk.join(',')}`,
-      );
-      const list = Array.isArray(pairs) ? pairs : pairs?.pairs ?? [];
-      for (const mint of chunk) {
-        const candidates = list.filter((p) => p.chainId === 'solana' && p.baseToken?.address === mint);
-        candidates.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0));
-        out.set(mint, candidates.map(toPairInfo));
+    for (const mint of mints) {
+      let list: DsPair[] = [];
+      try {
+        const r = await fetchJson<DsPair[] | { pairs?: DsPair[] }>(this.deps, 'dexscreener', 'token-pairs/v1', `${this.baseUrl}/token-pairs/v1/solana/${mint}`);
+        list = Array.isArray(r) ? r : r?.pairs ?? [];
+      } catch (err) {
+        // Repli : la meilleure paire seule, pour ne pas perdre le prix si l'endpoint détaillé est indisponible.
+        const r = await fetchJson<DsPair[] | { pairs?: DsPair[] }>(this.deps, 'dexscreener', 'tokens/v1', `${this.baseUrl}/tokens/v1/solana/${mint}`);
+        list = Array.isArray(r) ? r : r?.pairs ?? [];
+        void err;
       }
+      const candidates = list.filter((p) => p.chainId === 'solana' && p.baseToken?.address === mint);
+      candidates.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0));
+      out.set(mint, candidates.map(toPairInfo));
     }
     return out;
   }

@@ -55,7 +55,8 @@ function exit(i: SummaryInputs, s: SummarySettings): SummaryAnswer {
     ? ` Vendre ${usd(i.slippage.orderUsd)} coûterait ${pct(i.slippage.impactPct, 1)}.`
     : ` Coût d’une vente de ${usd(s.summarySlippageOrderUsd)} non estimé : cliquez sur Estimer.`;
   const ratio = `${pct(l.ratioPct, 1)} de la capitalisation`;
-  const where = l.poolsCount > 1 ? ` sur ${l.poolsCount} pools` : ' dans le seul pool connu';
+  // DexScreener plafonne la liste à 30 pools : au-delà, on le dit plutôt que de laisser croire à un compte exact.
+  const where = l.poolsCount >= 30 ? ' sur les 30 pools les plus liquides (liste plafonnée par la source, hors plateformes centralisées)' : l.poolsCount > 1 ? ` sur ${l.poolsCount} pools` : ' dans le seul pool connu';
   const state: SummaryState = l.band === 'very_thin' ? 'risk' : l.band === 'thin' ? 'warn' : 'ok';
   const short = l.band === 'very_thin' ? 'très mince' : l.band === 'thin' ? 'mince' : l.band === 'correct' ? 'correcte' : 'confortable';
   const head = l.band === 'very_thin'
