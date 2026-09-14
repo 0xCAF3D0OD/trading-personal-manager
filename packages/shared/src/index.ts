@@ -18,3 +18,5 @@ export * from './schemas/summary.schema.js';
 export * from './defaults/ui.js';
 export * from './ai-prompt.js';
 export * from './schemas/report.schema.js';
+export * from './defaults/portfolio.js';
+export * from './schemas/portfolio.schema.js';

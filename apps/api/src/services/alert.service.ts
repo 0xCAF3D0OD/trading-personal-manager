@@ -197,6 +197,7 @@ export class AlertService {
       case 'price_spread': return `Écart entre DexScreener et Jupiter supérieur à ${this.marketCfg().priceSpreadWarnPct} % sur ${this.marketCfg().priceSpreadAlertConsecutive} relevés consécutifs.`;
       case 'liq_withdrawal': return `Ratio liquidité / capitalisation en baisse de ${this.marketCfg().liqWithdrawal.ratioDropPct24h} % sur 24 h (ou liquidité du pool −${this.marketCfg().liqWithdrawal.liqDropPct6h} % sur 6 h) pendant que le prix reste au-dessus de ${this.marketCfg().liqWithdrawal.priceFloorPct} %.`;
       case 'scanner_clean_candidate': return 'Un token passe les cinq filtres structurels du scanner sans aucun drapeau, toutes vérifications faites. Une seule fois par token.';
+      case 'portfolio_daily_change': return 'La valeur totale du portefeuille Kraken a varié d’au moins le seuil réglé depuis le relevé de la veille. Valeur observée, aucune action.';
       case 'plan_tp': return `Sortie en gain fixée à ${fmt(a.threshold)}${planRef}`;
       case 'plan_sl': return `Sortie en perte fixée à ${fmt(a.threshold)}${planRef} — la règle que vous vous étiez fixée est atteinte.`;
       case 'plan_entry': return `Prix d’entrée cible ${fmt(a.threshold)} atteint${planRef}`;
@@ -237,6 +238,7 @@ function labelOf(t: AlertType): string {
     div_liquidity_withdrawal: 'Divergence : retrait de liquidité', div_unconfirmed_rise: 'Divergence : hausse non confirmée',
     div_announced_burn_no_supply_change: 'Divergence : burn annoncé sans baisse d’offre',
     scanner_clean_candidate: 'Scanner : candidat sans drapeau',
+    portfolio_daily_change: 'Portefeuille : variation journalière',
   };
   return m[t];
 }

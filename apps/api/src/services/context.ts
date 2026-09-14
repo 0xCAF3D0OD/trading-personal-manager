@@ -17,6 +17,7 @@ import { NewsRepo } from '../db/repositories/news.repo.js';
 import { TeamRepo } from '../db/repositories/team.repo.js';
 import { ScannerRepo } from '../db/repositories/scanner.repo.js';
 import { AiReportsRepo } from '../db/repositories/ai-reports.repo.js';
+import { PortfolioRepo } from '../db/repositories/portfolio.repo.js';
 
 export interface Logger {
   info(obj: unknown, msg?: string): void;
@@ -44,6 +45,7 @@ export class AppContext {
   readonly team: TeamRepo;
   readonly scanner: ScannerRepo;
   readonly reports: AiReportsRepo;
+  readonly portfolio: PortfolioRepo;
 
   constructor(readonly env: Env, readonly db: Db, readonly log: Logger) {
     this.usage = new UsageRepo(db);
@@ -63,6 +65,7 @@ export class AppContext {
     this.team = new TeamRepo(db);
     this.scanner = new ScannerRepo(db);
     this.reports = new AiReportsRepo(db);
+    this.portfolio = new PortfolioRepo(db);
   }
 }
 

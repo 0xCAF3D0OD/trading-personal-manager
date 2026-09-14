@@ -89,6 +89,19 @@ Il n'y a ni note ni total : les cinq réponses sont côte à côte, et c'est vou
 
 Le cadrage complet est dans [docs/04-metriques-marche-et-veille.md](docs/04-metriques-marche-et-veille.md).
 
+### Le portefeuille Kraken (livré)
+
+L'écran Portefeuille montre ce que contient votre compte Kraken, sans jamais pouvoir y toucher. La clé demandée n'a qu'une permission, consulter les soldes, et le code n'appelle qu'un seul endpoint : un test vérifie que cette liste ne grandit pas. Aucune route d'ordre, de retrait ni de conversion n'existe.
+
+- **Deux prix, jamais moyennés** : le prix Kraken, là où l'actif est détenu, donc ce qu'une vente rapporterait ; et pour les tokens surveillés, le prix on-chain, avec l'écart entre les deux.
+- **Le lien entre un actif Kraken et un token surveillé se déclare à la main**, dans Réglages, onglet Portefeuille. Kraken ne publie pas les adresses de mint et dix tokens portent le même symbole : une suggestion par symbole est proposée, jamais appliquée seule.
+- **Le plan face au compte** : pour un token relié qui a un plan dans le journal, l'écran dit en mots l'écart entre ce que le compte contient et ce que le plan prévoyait, et où se situe le prix Kraken entre la sortie en perte et la sortie en gain.
+- **Mode discret** : un bouton masque les montants et ne laisse que les parts, pour consulter l'outil sans afficher ce que vous possédez.
+- Un relevé au plus toutes les 15 minutes, un seul conservé par jour à 23:55, courbe de la valeur dans le temps. Les soldes stakés ou en Earn sont comptés mais marqués « non vendable immédiatement ».
+- Les montants ne sont jamais inclus dans les dossiers pour l'IA.
+
+Pour l'activer : sur Kraken, créez une clé dédiée (par exemple `tpm-lecture`) avec la seule permission « Query Funds » et une date d'expiration, puis mettez `KRAKEN_API_KEY` et `KRAKEN_API_SECRET` dans le `.env` et relancez. La page Système confirme « Portefeuille Kraken : disponible ».
+
 ### L'accès pour l'IA (livré)
 
 Vous pouvez donner à une IA tout ce que la plateforme sait d'un token, sans payer une API en plus et sans qu'aucune clé ne circule.
@@ -149,7 +162,7 @@ Les premiers signaux de divergence apparaissent après deux ou trois jours de re
 | **0.3.1 — Panneau de métriques de marché** | Livrée le 14 septembre 2026 | État de dérivée (extinction / accélération) sur les fenêtres 6 h, 1 h, 5 min ; écart entre sources avec alerte sur trois relevés ; capitalisation en trois lectures (source, recalculée, FDV) avec écart et détection de substitution ; offre émise nette des burns avec composants séparés ; ratio liquidité / capitalisation avec bandes, liste des pools, slippage estimé par cotation Jupiter ; volume avec source et bandes ; courbes groupées par source ; alerte de retrait de liquidité avec exclusion des migrations ; trois divergences de plus ; réglages versionnés. Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md), partie A. |
 | **0.4.1 — Lecture simple** | Livrée le 14 septembre 2026, avec les propositions par défaut du cadrage | Deux niveaux de lecture (simple par défaut, détail à la demande, globalement ou carte par carte) ; synthèse en cinq questions en tête de fiche, en phrases fixes, sans note ni total ; vocabulaire expliqué au survol ; cartes rangées dans l'ordre des questions ; liste de surveillance et scanner allégés ; colonne « Où l'acheter » dans le scanner (DEX par pool, plateformes centralisées via la fiche CoinGecko) ; réglages d'affichage versionnés. Cadrage : [docs/05](docs/05-lecture-simple-et-acces-ia.md), partie A. |
 | **0.4.2 — Accès pour l'IA** | Livrée le 14 septembre 2026 | Dossier complet d'un token en Markdown, daté et sourcé, avec la consigne de rédaction en tête (à copier dans n'importe quelle IA) ; connecteur MCP local pour l'application de bureau Claude (abonnement, sans clé, quatre outils en lecture seule) ; rapports collés conservés, figés, reliés à l'empreinte du dossier ; filtres « récent » et « forte évolution » sur la liste et le scanner. L'appel API côté serveur reste en option, non livré. Cadrage : [docs/05](docs/05-lecture-simple-et-acces-ia.md), partie B. |
-| **0.5.0 — Portefeuille** | En cours : source Kraken livrée (signature, liste blanche d'un seul endpoint, codes normalisés, prix publics), valorisation et écran à suivre. Cadrage : [docs/06](docs/06-portefeuille-kraken.md) | Valeur du portefeuille Kraken en lecture seule (permission de consultation des soldes uniquement), avec la source de chaque prix. Aucune route d'ordre. |
+| **0.5.0 — Portefeuille** | Livrée le 14 septembre 2026, avec les propositions par défaut du cadrage | Soldes Kraken en lecture seule (clé « Query Funds » seule, un seul endpoint appelé, liste blanche testée), valorisation avec deux prix jamais moyennés (Kraken et on-chain), euro par défaut, un relevé conservé par jour, correspondances actif ↔ token déclarées à la main, le plan du journal face au compte, mode discret, alerte optionnelle sur la variation journalière, montants exclus des dossiers IA. Cadrage : [docs/06](docs/06-portefeuille-kraken.md). | Valeur du portefeuille Kraken en lecture seule (permission de consultation des soldes uniquement), avec la source de chaque prix. Aucune route d'ordre. |
 | Non planifié | — | Web Push (ntfy couvre le besoin), indicateurs techniques (exclus par principe), multi-utilisateurs (hors périmètre). |
 
 ### Ce que chaque version a tranché
@@ -236,7 +249,7 @@ La réponse indique le palier détecté (A, B ou C) et, pour chaque donnée, la 
 npm test
 ```
 
-Quatre-vingt-onze tests : dossier pour l'IA (consigne en tête, cinq questions et finalités, plan exclu par défaut, aucune clé, sections vides dites telles quelles), synthèse en cinq questions (gabarits, inconnu et partiel, bascules d'état), plateformes d'échange du scanner, base58 et adresse nulle, immuabilité des plans et des engagements, sept règles de divergence, moteur de diff (normalisation, appariement, lignes volatiles, robots.txt, JSON), pipeline de veille complet sur un site local, vérification automatique des engagements, réglages versionnés, métriques de marché (état de dérivée, écart de prix, capitalisation, bandes, slippage, retrait de liquidité et migrations, intégrité des courbes), pipeline du scanner avec jeux de données figés (normalisation, cinq étages, tri, paliers, rétrospective).
+Cent six tests : source Kraken (signature contre le vecteur public, liste blanche, codes), valorisation du portefeuille et plan face au compte, dossier pour l'IA (consigne en tête, cinq questions et finalités, plan exclu par défaut, aucune clé, sections vides dites telles quelles), synthèse en cinq questions (gabarits, inconnu et partiel, bascules d'état), plateformes d'échange du scanner, base58 et adresse nulle, immuabilité des plans et des engagements, sept règles de divergence, moteur de diff (normalisation, appariement, lignes volatiles, robots.txt, JSON), pipeline de veille complet sur un site local, vérification automatique des engagements, réglages versionnés, métriques de marché (état de dérivée, écart de prix, capitalisation, bandes, slippage, retrait de liquidité et migrations, intégrité des courbes), pipeline du scanner avec jeux de données figés (normalisation, cinq étages, tri, paliers, rétrospective).
 
 ---
 
@@ -304,6 +317,7 @@ Quatre-vingt-onze tests : dossier pour l'IA (consigne en tête, cinq questions e
 | Scanner : découverte | 5 min | GeckoTerminal nouveaux pools (48 h) + tendances |
 | Scanner : re-vérification | 15 min chaud, 2 h tiède, 24 h froid | GeckoTerminal multi-pools, 30 adresses par appel |
 | Scanner : enrichissement | RPC 24 h, info token 6 h, créateur 7 j | RPC, GeckoTerminal, Helius DAS |
+| Portefeuille Kraken | 15 min en mémoire, un relevé conservé par jour | Kraken Balance (privé, lecture seule) + Ticker (public) |
 
 Le cache est en mémoire et recopié dans la table `cache_entries` : un redémarrage ne rebrûle aucun quota. Le polling frontend (TanStack Query, `staleTime` aligné sur ces TTL) n'interroge que le backend.
 
