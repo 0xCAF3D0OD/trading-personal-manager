@@ -18,7 +18,7 @@ const token = useToken(id);
 const overview = useWatchOverview(id);
 const changes = useWatchChanges(id);
 const timeline = useTimeline(id);
-const tab = ref<'claims' | 'changes' | 'timeline' | 'news' | 'promo' | 'sources' | 'team' | 'settings'>('claims');
+const tab = ref<'claims' | 'changes' | 'timeline' | 'news' | 'promo' | 'sources' | 'team' | 'settings'>('timeline');
 const o = computed(() => overview.data.value?.data);
 const tabs = computed(() => [
   { k: 'claims', l: 'Engagements', n: o.value?.counts.claimsPending },

@@ -43,7 +43,7 @@ const SEV: Record<string, { s: string; l: string }> = { tokenomics: { s: 'risk',
           </tr>
         </tbody>
       </table>
-      <details :open="c.severity !== 'minor' && !c.numericChanges.length">
+      <details>
         <summary class="small muted">{{ c.hunks.length }} bloc(s) de texte</summary>
         <div v-for="(h, i) in c.hunks" :key="i" class="small" style="padding:.3rem 0;border-top:1px solid var(--border)">
           <div class="faint">{{ h.path || '(racine)' }} · {{ h.op === 'added' ? 'ajouté' : h.op === 'removed' ? 'supprimé' : 'modifié' }}</div>

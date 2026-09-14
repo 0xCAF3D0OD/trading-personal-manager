@@ -11,6 +11,7 @@ import { MarketService } from './market.service.js';
 import { buildNotifierHub } from './notify/index.js';
 import { PlanService } from './plan.service.js';
 import { SettingsService } from './settings.service.js';
+import { SummaryService } from './summary.service.js';
 import { SlippageService } from './slippage.service.js';
 import { ScannerService } from './scanner.service.js';
 import { SupplyService } from './supply.service.js';
@@ -35,6 +36,7 @@ export interface Services {
   creator: CreatorService;
   system: SystemService;
   settings: SettingsService;
+  summary: SummaryService;
   slippage: SlippageService;
   scanner: ScannerService;
   watchPages: WatchPageService;
@@ -71,6 +73,7 @@ export function buildServices(env: Env, db: Db, log: Logger): Services {
   ctx.sources.scannerRateCfg = () => settings.get<ScannerSettings>('scanner').rateLimit;
   return {
     ctx, tokens, market, divergences, alerts, settings,
+    summary: new SummaryService(ctx, tokens, settings, divergences),
     slippage: new SlippageService(ctx, tokens, market, settings),
     scanner: new ScannerService(ctx, settings, alerts),
     health: new HealthService(ctx, tokens),

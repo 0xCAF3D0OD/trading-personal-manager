@@ -184,3 +184,25 @@ export function retroStats(rows: { pnlPct: number | null; status: string }[]) {
   const histogram = BUCKETS.map((b) => ({ label: b.label, count: withLossVals.filter((v) => v >= b.min && (b.max === null || v < b.max)).length }));
   return { count: filled.length + unavailable, unavailable, withLoss: compute(withLossVals), excluding: compute(filled), histogram };
 }
+
+/** Identifiants CoinGecko de marchés décentralisés : déjà couverts par les pools, on ne les recompte pas comme CEX. */
+const CG_DEX_IDS = new Set(['orca', 'raydium', 'raydium2', 'raydium-clmm', 'raydium_clmm', 'meteora', 'meteora-dlmm', 'jupiter', 'openbook', 'phoenix', 'lifinity', 'lifinity-v2', 'pumpswap', 'pump_fun', 'pumpfun', 'saber', 'aldrin', 'crema', 'invariant', 'cropper', 'dexlab', 'fluxbeam', 'moonshot', 'serum_dex', 'whirlpool', 'goosefx', 'stabble']);
+const DEX_LABELS: Record<string, string> = {
+  raydium: 'Raydium', 'raydium-clmm': 'Raydium CLMM', raydium_clmm: 'Raydium CLMM', 'raydium-cpmm': 'Raydium CPMM', orca: 'Orca', meteora: 'Meteora', 'meteora-dlmm': 'Meteora DLMM',
+  pumpfun: 'Pump.fun', 'pump-fun': 'Pump.fun', pumpswap: 'PumpSwap', jupiter: 'Jupiter', lifinity: 'Lifinity', phoenix: 'Phoenix', fluxbeam: 'FluxBeam', moonshot: 'Moonshot', openbook: 'OpenBook', dexlab: 'Dexlab',
+};
+export interface CexVenueFact { name: string; identifier: string; volumeUsd: number | null; url: string | null }
+export function cexVenuesFromTickers(tickers: { name: string; identifier: string; volumeUsd: number | null; tradeUrl: string | null }[]): CexVenueFact[] {
+  const byId = new Map<string, CexVenueFact>();
+  for (const t of tickers) {
+    const id = t.identifier.toLowerCase();
+    if (CG_DEX_IDS.has(id)) continue;
+    const prev = byId.get(id);
+    if (prev) { prev.volumeUsd = (prev.volumeUsd ?? 0) + (t.volumeUsd ?? 0); continue; }
+    byId.set(id, { name: t.name, identifier: id, volumeUsd: t.volumeUsd, url: t.tradeUrl });
+  }
+  return [...byId.values()].sort((a, b) => (b.volumeUsd ?? 0) - (a.volumeUsd ?? 0));
+}
+export function dexLabel(dexId: string): string {
+  return DEX_LABELS[dexId.toLowerCase()] ?? dexId.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}

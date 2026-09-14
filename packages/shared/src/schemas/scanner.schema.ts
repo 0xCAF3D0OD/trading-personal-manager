@@ -45,6 +45,17 @@ export const ScanMetrics = z.object({
 });
 export type ScanMetrics = z.infer<typeof ScanMetrics>;
 
+/** Où le token s'échange. DEX connus par adresse de pool ; CEX seulement via la fiche CoinGecko du token, jamais par simple symbole. */
+export const ScanVenue = z.object({
+  name: z.string(),
+  kind: z.enum(['dex', 'cex']),
+  identifier: z.string(),
+  url: z.string().nullable(),
+  volume24hUsd: z.number().nullable(),
+  isKraken: z.boolean(),
+});
+export type ScanVenue = z.infer<typeof ScanVenue>;
+
 export const ScanResult = z.object({
   id: z.number(),
   runId: z.number(),
@@ -64,6 +75,9 @@ export const ScanResult = z.object({
   metrics: ScanMetrics,
   observedAt: z.number(),
   inWatchlist: z.boolean(),
+  venues: z.array(ScanVenue),
+  /** Pourquoi les CEX peuvent manquer : pas de fiche CoinGecko, ou pas encore vérifié. */
+  venuesNote: z.string().nullable(),
 });
 export type ScanResult = z.infer<typeof ScanResult>;
 

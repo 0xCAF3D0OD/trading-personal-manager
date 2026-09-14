@@ -20,6 +20,11 @@ export function tokenDetailRoutes(app: FastifyInstance, s: Services, expensive: 
     return envelope(h, item);
   });
 
+  app.get('/tokens/:id/summary', async (req) => {
+    const { id } = IdParam.parse(req.params);
+    return envelope(h, s.summary.get(id), { source: 'local' });
+  });
+
   app.get('/tokens/:id/health', async (req) => {
     const { id } = IdParam.parse(req.params);
     const r = await s.health.get(id);

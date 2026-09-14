@@ -1,4 +1,5 @@
-import type { ScanExclusion, ScanFlag, ScanMetrics, ScanResult, ScanRetroRow, ScanRun, ScanStructuralCheck, ScanTier } from '@tpm/shared';
+import type { ScanExclusion, ScanFlag, ScanMetrics, ScanResult, ScanRetroRow, ScanRun, ScanStructuralCheck, ScanTier, ScanVenue } from '@tpm/shared';
+import { dexLabel, type CexVenueFact } from '../../scanner/pipeline.js';
 import type { Db } from '../client.js';
 import { nowS } from '../client.js';
 
@@ -13,6 +14,7 @@ export interface FactsRow {
   supply: number | null; decimals: number | null; rpc_checked_at: number | null; holders_count: number | null; top10_pct: number | null; developer_address: string | null;
   developer_holding_pct: number | null; has_website: number | null; has_socials: number | null; has_description: number | null; gt_is_honeypot: string | null;
   gt_mint_authority: string | null; gt_freeze_authority: string | null; gt_checked_at: number | null; creator_address: string | null; creator_token_count: number | null; creator_checked_at: number | null;
+  coingecko_id: string | null; cex_venues: string | null; cex_checked_at: number | null;
 }
 interface RunRow { id: number; started_at: number; finished_at: number | null; status: string; settings_id: number; pools_checked: number; passed_stage2: number; passed_stage3: number; kept_count: number; api_calls: number; stage2_reasons: string; error: string | null }
 interface ResultRow { id: number; run_id: number; pool_address: string; token_address: string; token_symbol: string | null; token_name: string | null; status: 'kept' | 'excluded'; excluded_stage: number | null; exclusion_reasons: string; structural: string; structural_passed: number | null; structural_total: number | null; flags: string; flag_count: number; unverified_count: number; metrics: string; observed_at: number }
@@ -25,12 +27,30 @@ const j = <T>(s: string | null, fb: T): T => { if (!s) return fb; try { return J
 export function toRun(r: RunRow): ScanRun {
   return { id: r.id, startedAt: r.started_at, finishedAt: r.finished_at, status: r.status, settingsId: r.settings_id, poolsChecked: r.pools_checked, passedStage2: r.passed_stage2, passedStage3: r.passed_stage3, keptCount: r.kept_count, apiCalls: r.api_calls, stage2Reasons: j(r.stage2_reasons, {}), error: r.error };
 }
-export function toResult(r: ResultRow, watch: Set<string>): ScanResult {
+export function venuesOf(metrics: ScanMetrics, facts: Pick<FactsRow, 'coingecko_id' | 'cex_venues' | 'cex_checked_at'> | undefined): { venues: ScanVenue[]; note: string | null } {
+  const venues: ScanVenue[] = [];
+  const seenDex = new Set<string>();
+  const pools = [{ poolAddress: metrics.poolAddress, dexId: metrics.dexId, liquidityUsd: metrics.liquidityUsd }, ...(metrics.otherPools ?? [])];
+  for (const p of pools) {
+    if (!p?.dexId || seenDex.has(p.dexId)) continue;
+    seenDex.add(p.dexId);
+    venues.push({ name: dexLabel(p.dexId), kind: 'dex', identifier: p.dexId, url: `https://www.geckoterminal.com/solana/pools/${p.poolAddress}`, volume24hUsd: null, isKraken: false });
+  }
+  const cex = j<CexVenueFact[]>(facts?.cex_venues ?? null, []);
+  for (const c of cex) venues.push({ name: c.name, kind: 'cex', identifier: c.identifier, url: c.url, volume24hUsd: c.volumeUsd, isKraken: c.identifier === 'kraken' });
+  const note = !facts?.coingecko_id
+    ? 'Pas de fiche CoinGecko : les plateformes centralisées ne peuvent pas être vérifiées, seuls les DEX sont listés.'
+    : !facts.cex_checked_at ? 'Fiche CoinGecko trouvée, marchés centralisés pas encore vérifiés.' : cex.length ? null : 'Fiche CoinGecko trouvée, aucune plateforme centralisée ne cote ce token.';
+  return { venues, note };
+}
+export function toResult(r: ResultRow, watch: Set<string>, facts?: FactsRow): ScanResult {
+  const metrics = j<ScanMetrics>(r.metrics, {} as ScanMetrics);
+  const v = venuesOf(metrics, facts);
   return {
     id: r.id, runId: r.run_id, poolAddress: r.pool_address, tokenAddress: r.token_address, tokenSymbol: r.token_symbol, tokenName: r.token_name, status: r.status,
     excludedStage: r.excluded_stage, exclusionReasons: j<ScanExclusion[]>(r.exclusion_reasons, []), structural: j<ScanStructuralCheck[]>(r.structural, []),
     structuralPassed: r.structural_passed, structuralTotal: r.structural_total, flags: j<ScanFlag[]>(r.flags, []), flagCount: r.flag_count, unverifiedCount: r.unverified_count,
-    metrics: j<ScanMetrics>(r.metrics, {} as ScanMetrics), observedAt: r.observed_at, inWatchlist: watch.has(r.token_address),
+    metrics, observedAt: r.observed_at, inWatchlist: watch.has(r.token_address), venues: v.venues, venuesNote: v.note,
   };
 }
 export function toRetro(r: RetroRow, watch: Set<string>): ScanRetroRow {
@@ -105,16 +125,16 @@ export class ScannerRepo {
       .run(r.runId, r.poolAddress, r.tokenAddress, r.symbol, r.name, r.status, r.excludedStage, JSON.stringify(r.exclusionReasons), JSON.stringify(r.structural), r.structuralPassed, r.structuralTotal, JSON.stringify(r.flags), r.flagCount, r.unverifiedCount, JSON.stringify(r.metrics), nowS()).lastInsertRowid);
   }
   results(runId: number, status: 'kept' | 'excluded', watch: Set<string>): ScanResult[] {
-    return (this.db.prepare('SELECT * FROM scan_results WHERE run_id = ? AND status = ? ORDER BY flag_count ASC, unverified_count ASC, id ASC').all(runId, status) as unknown as ResultRow[]).map((r) => toResult(r, watch));
+    return (this.db.prepare('SELECT * FROM scan_results WHERE run_id = ? AND status = ? ORDER BY flag_count ASC, unverified_count ASC, id ASC').all(runId, status) as unknown as ResultRow[]).map((r) => toResult(r, watch, this.facts(r.token_address)));
   }
   /** Derniers résultats gardés toutes exécutions confondues : un par token, le plus récent. */
   latestKeptPerToken(days: number, watch: Set<string>): ScanResult[] {
     const rows = this.db.prepare(`SELECT r.* FROM scan_results r JOIN (SELECT token_address, MAX(id) AS id FROM scan_results WHERE status = 'kept' AND observed_at >= ? GROUP BY token_address) l ON l.id = r.id ORDER BY r.flag_count ASC, r.unverified_count ASC`).all(nowS() - days * 86400) as unknown as ResultRow[];
-    return rows.map((r) => toResult(r, watch));
+    return rows.map((r) => toResult(r, watch, this.facts(r.token_address)));
   }
   recentExcluded(days: number, watch: Set<string>, limit = 500): ScanResult[] {
     const rows = this.db.prepare(`SELECT r.* FROM scan_results r JOIN (SELECT token_address, MAX(id) AS id FROM scan_results WHERE status = 'excluded' AND observed_at >= ? GROUP BY token_address) l ON l.id = r.id ORDER BY r.observed_at DESC LIMIT ?`).all(nowS() - days * 86400, limit) as unknown as ResultRow[];
-    return rows.map((r) => toResult(r, watch));
+    return rows.map((r) => toResult(r, watch, this.facts(r.token_address)));
   }
   purgeExcluded(olderThanS: number): number { return Number(this.db.prepare(`DELETE FROM scan_results WHERE status = 'excluded' AND observed_at < ?`).run(nowS() - olderThanS).changes); }
 

@@ -2,7 +2,7 @@ import type { RetroHorizonStats, ScanFlag, ScanMetrics, ScannerOverview, Scanner
 import { BreakerOpenError, type GtPool } from '../datasources/geckoterminal/geckoterminal.source.js';
 import type { FactsRow, ScanPoolRow } from '../db/repositories/scanner.repo.js';
 import { nowS } from '../db/client.js';
-import { ageHours, capOf, median, normalizeGtPool, retroStats, sortKept, stage2, stage3, stage4, tierAfter, type PoolSnap, type TokenFacts } from '../scanner/pipeline.js';
+import { ageHours, capOf, median, normalizeGtPool, retroStats, sortKept, stage2, stage3, stage4, tierAfter, type PoolSnap, type TokenFacts, cexVenuesFromTickers } from '../scanner/pipeline.js';
 import type { AlertService } from './alert.service.js';
 import { AppContext } from './context.js';
 import type { SettingsService } from './settings.service.js';
@@ -173,10 +173,19 @@ export class ScannerService {
     if (need.gt && (!f?.gt_checked_at || now - f.gt_checked_at > TTL_GT)) {
       try {
         const i = await this.gt.tokenInfo(token);
-        this.ctx.scanner.upsertFacts(token, { holders_count: i.holdersCount, top10_pct: i.top10Pct, developer_address: i.developerAddress, developer_holding_pct: i.developerHoldingPct, has_website: i.websites.length ? 1 : 0, has_socials: i.hasSocials ? 1 : 0, has_description: i.description ? 1 : 0, gt_is_honeypot: i.isHoneypot, gt_mint_authority: i.mintAuthority, gt_freeze_authority: i.freezeAuthority, gt_checked_at: now });
+        this.ctx.scanner.upsertFacts(token, { holders_count: i.holdersCount, top10_pct: i.top10Pct, developer_address: i.developerAddress, developer_holding_pct: i.developerHoldingPct, has_website: i.websites.length ? 1 : 0, has_socials: i.hasSocials ? 1 : 0, has_description: i.description ? 1 : 0, gt_is_honeypot: i.isHoneypot, gt_mint_authority: i.mintAuthority, gt_freeze_authority: i.freezeAuthority, gt_checked_at: now, coingecko_id: i.coingeckoCoinId });
       } catch (err) { this.ctx.log.warn({ err: (err as Error).message, token }, 'Scanner : token info échoué'); }
     }
     f = this.ctx.scanner.facts(token);
+    // Plateformes centralisées : seulement si le token a une fiche CoinGecko. Un symbole seul ne prouve rien.
+    const TTL_CEX = 24 * 3600;
+    if (need.gt && f?.coingecko_id && (!f.cex_checked_at || now - f.cex_checked_at > TTL_CEX)) {
+      try {
+        const tickers = await this.gt.coinTickers(f.coingecko_id);
+        const venues = cexVenuesFromTickers(tickers);
+        this.ctx.scanner.upsertFacts(token, { cex_venues: JSON.stringify(venues), cex_checked_at: now });
+      } catch (err) { this.ctx.log.warn({ err: (err as Error).message, token }, 'Scanner : marchés CoinGecko échoués'); }
+    }
     if (need.creator && this.ctx.sources.helius && (!f?.creator_checked_at || now - f.creator_checked_at > TTL_CREATOR)) {
       const creator = f?.developer_address ?? null;
       if (creator) {

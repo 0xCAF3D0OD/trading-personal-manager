@@ -1,6 +1,8 @@
 export const qk = {
   watchlist: ['tokens'] as const,
   token: (id: number) => ['tokens', id] as const,
+  summary: (id: number) => ['tokens', id, 'summary'] as const,
+  summaries: ['tokens', 'summaries'] as const,
   health: (id: number) => ['tokens', id, 'health'] as const,
   market: (id: number) => ['tokens', id, 'market'] as const,
   supply: (id: number) => ['tokens', id, 'supply'] as const,
