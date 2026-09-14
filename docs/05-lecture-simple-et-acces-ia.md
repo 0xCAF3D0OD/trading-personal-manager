@@ -170,6 +170,10 @@ Le même texte sert de consigne dans le dossier copié (B.2), en tête, pour que
 
 Demandé le 14 septembre 2026. `GET /tokens/:id/reports/:rid/export?format=md|html` et `GET /tokens/:id/dossier/export?format=md|html`, servis en pièce jointe (`content-disposition`). Le HTML est une page autonome : styles intégrés, aucune ressource externe, feuille d'impression pour le PDF, en-tête (token, date, fournisseur, empreinte, version de la consigne) et pied rappelant l'absence de recommandation. Convertisseur Markdown minimal maison, sans dépendance, texte échappé. Les liens de téléchargement sont des ancres vers l'API, même origine, sans JavaScript.
 
+### B.8 Dossiers de collection : liste et scanner
+
+Demandé le 14 septembre 2026. `GET /dossier/list?ids=…` et `GET /dossier/scanner?days=…&addresses=…` (`format=json|md|html`, `download=1` pour la pièce jointe). Construits uniquement sur la base locale : liste et synthèses en cinq questions pour la liste ; état du scanner, exclus par motif, tokens gardés avec filtres, drapeaux et plateformes, rétrospective pour le scanner. Les paramètres `ids` / `addresses` reflètent la sélection filtrée à l'écran. Consigne dédiée (`COLLECTION_PROMPT`) : regrouper par ce qui est vérifié, jamais classer du meilleur au pire.
+
 ### B.7 Schéma
 
 ```sql

@@ -85,12 +85,13 @@ export function buildServices(env: Env, db: Db, log: Logger): Services {
   const claims = new ClaimsService(ctx, tokens, settings, alerts);
   const news = new NewsService(ctx, tokens, settings);
   const onchain = new OnchainWatchService(ctx, tokens, settings, alerts);
-  const dossier = new DossierService(ctx, { tokens, settings, summary, health, market, supply, holders, creator, watchPages, claims, news, onchain, divergences, plans });
+  const scanner = new ScannerService(ctx, settings, alerts);
+  const dossier = new DossierService(ctx, { tokens, settings, summary, health, market, supply, holders, creator, watchPages, claims, news, onchain, divergences, plans, scanner });
   return {
     ctx, tokens, market, divergences, alerts, settings, summary, dossier,
     reports: new ReportService(ctx, tokens, dossier),
     slippage: new SlippageService(ctx, tokens, market, settings),
-    scanner: new ScannerService(ctx, settings, alerts),
+    scanner,
     health, supply, holders, plans, creator,
     system: new SystemService(ctx, JOB_SCHEDULES(env)),
     watchPages, claims, news, onchain,

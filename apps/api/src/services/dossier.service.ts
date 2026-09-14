@@ -2,6 +2,7 @@ import type { DossierView, UiSettings } from '@tpm/shared';
 import { createHash } from 'node:crypto';
 import { nowS } from '../db/client.js';
 import { buildDossier, type DossierInputs } from '../dossier/build.js';
+import { buildListDossier, buildScannerDossier } from '../dossier/collections.js';
 import { AppContext } from './context.js';
 import type { CreatorService } from './creator.service.js';
 import type { DivergenceService } from './divergence.service.js';
@@ -9,6 +10,7 @@ import type { HealthService } from './health.service.js';
 import type { HoldersService } from './holders.service.js';
 import type { MarketService } from './market.service.js';
 import type { PlanService } from './plan.service.js';
+import type { ScannerService } from './scanner.service.js';
 import type { SettingsService } from './settings.service.js';
 import type { SummaryService } from './summary.service.js';
 import type { SupplyService } from './supply.service.js';
@@ -25,9 +27,37 @@ export class DossierService {
     private readonly s: {
       tokens: TokenService; settings: SettingsService; summary: SummaryService; health: HealthService; market: MarketService; supply: SupplyService;
       holders: HoldersService; creator: CreatorService; watchPages: WatchPageService; claims: ClaimsService; news: NewsService; onchain: OnchainWatchService;
-      divergences: DivergenceService; plans: PlanService;
+      divergences: DivergenceService; plans: PlanService; scanner: ScannerService;
     },
   ) {}
+
+  /** Dossier de la liste de surveillance (B.8), limité aux ids donnés si le lecteur a filtré. Local uniquement. */
+  list(ids?: number[]): { generatedAt: number; count: number; hash: string; markdown: string } {
+    const now = nowS();
+    const all = this.s.tokens.list();
+    const items = ids?.length ? all.filter((t) => ids.includes(t.id)) : all;
+    const summaries = this.s.summary.all();
+    const markdown = buildListDossier({ items, summaries, tier: this.ctx.sources.tier, generatedAt: now, filterNote: ids?.length && ids.length < all.length ? `sélection de ${items.length} sur ${all.length}` : null });
+    return { generatedAt: now, count: items.length, hash: this.hashOf(markdown), markdown };
+  }
+
+  /** Dossier des résultats du scanner (B.8), limité aux adresses données si le lecteur a filtré. Local uniquement. */
+  scanner(days: number, addresses?: string[]): { generatedAt: number; count: number; hash: string; markdown: string } {
+    const now = nowS();
+    const all = this.s.scanner.results(days);
+    const results = addresses?.length ? all.filter((r) => addresses.includes(r.tokenAddress)) : all;
+    const byReason = new Map<string, number>();
+    for (const r of this.s.scanner.excluded(days)) for (const e of r.exclusionReasons) byReason.set(e.label, (byReason.get(e.label) ?? 0) + 1);
+    const excludedByReason = [...byReason.entries()].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count);
+    let retro = null;
+    try { retro = this.s.scanner.retroView(); } catch { retro = null; }
+    const markdown = buildScannerDossier({ overview: this.s.scanner.overview(), results, days, retro, excludedByReason, generatedAt: now, filterNote: addresses?.length && addresses.length < all.length ? `sélection de ${results.length} sur ${all.length}` : null });
+    return { generatedAt: now, count: results.length, hash: this.hashOf(markdown), markdown };
+  }
+
+  private hashOf(markdown: string): string {
+    return createHash('sha256').update(markdown.replace(/Généré le [^\n]*/, '')).digest('hex').slice(0, 16);
+  }
 
   async get(tokenId: number, opts: { includePlan?: boolean } = {}): Promise<DossierView> {
     const token = this.s.tokens.require(tokenId);

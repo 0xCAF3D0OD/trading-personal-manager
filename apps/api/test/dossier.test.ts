@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { AI_REPORT_PROMPT, GLOSSARY } from '@tpm/shared';
 import { buildDossier, type DossierInputs } from '../src/dossier/build.js';
 import { mdToHtml, safeFilename, toStandaloneHtml } from '../src/dossier/export.js';
+import { buildListDossier, buildScannerDossier } from '../src/dossier/collections.js';
 
 const now = 1_789_000_000;
 function inputs(over: Partial<DossierInputs> = {}): DossierInputs {
@@ -79,5 +80,36 @@ describe('Export partageable', () => {
   it('fabrique des noms de fichiers sûrs', () => {
     expect(safeFilename(['rapport', 'EMBER', '2026-09-14', 'manuel'], 'html')).toBe('rapport-ember-2026-09-14-manuel.html');
     expect(safeFilename(['dossier', 'Éclair/Été', null], 'md')).toBe('dossier-eclair-ete.md');
+  });
+});
+
+describe('Dossiers de collection', () => {
+  const token = { id: 1, address: '5dvXTZ5qwgafnHtwu3Ls3QrWx1U4LQsFeCuJgkk4QEC6', symbol: 'EMBER', name: 'Embercurve', decimals: 6, program: 'spl-token' as const, createdAt: now - 90 * 86400, creatorAddress: null, sortOrder: 1, addedAt: now, priceUsd: 0.0123, priceSource: 'dexscreener' as const, priceChange24hPct: 12.5, marketCapUsd: 1_200_000, volume24hUsd: 80_000, ageDays: 90, lastMarketTs: now, lastHolderTs: null };
+  it('la liste : vue d’ensemble en tableau, une section par token avec les cinq réponses, jamais de classement', () => {
+    const md = buildListDossier({ items: [token], summaries: { 1: inputs().summary }, tier: 'B', generatedAt: now, filterNote: 'sélection de 1 sur 3' });
+    expect(md).toContain('# Dossier : liste de surveillance');
+    expect(md).toContain('Ne classe pas les tokens');
+    expect(md).toContain('| EMBER |');
+    expect(md).toContain('## 1. EMBER (Embercurve)');
+    expect(md).toContain('**Puis-je sortir ?** Avec prudence');
+    expect(md).toContain('sélection de 1 sur 3');
+  });
+  it('le scanner : état, exclus par motif, tokens gardés avec drapeaux et plateformes, rétrospective', () => {
+    const md = buildScannerDossier({
+      overview: { lastRun: { id: 1, startedAt: now, finishedAt: now, status: 'ok', settingsId: 1, poolsChecked: 220, passedStage2: 30, passedStage3: 6, keptCount: 4, apiCalls: 12, stage2Reasons: {}, error: null }, pools: { hot: 10, warm: 5, cold: 0, retired: 0 }, breaker: { open: false, until: null, consecutive429: 0 }, lane: 'geckoterminal', callsLastHour: 12, heliusAvailable: false, enabled: true },
+      results: [{ id: 1, runId: 1, poolAddress: 'Pool111', tokenAddress: 'Tok111', tokenSymbol: 'NEW', tokenName: 'Nouveau', status: 'kept', excludedStage: null, exclusionReasons: [], structural: [{ code: 'mint', label: 'Autorité de mint révoquée', passed: true, observed: 'révoquée', threshold: null, source: 'rpc' }], structuralPassed: 5, structuralTotal: 5,
+        flags: [{ code: 'top10', label: 'Top 10 élevé', raised: true, verified: true, observed: 55, threshold: 40, detail: '', source: 'geckoterminal' }, { code: 'creator', label: 'Créateur en série', raised: false, verified: false, observed: null, threshold: null, detail: '', source: 'helius' }], flagCount: 1, unverifiedCount: 1,
+        metrics: { poolAddress: 'Pool111', dexId: 'raydium', priceUsd: 0.002, priceSource: 'geckoterminal', ageHours: 30, poolCreatedAt: now, pctH1: 5, pctH24: 180, capUsd: 900_000, mcapIsFdv: true, fdvUsd: 900_000, marketCapUsd: null, liquidityUsd: 120_000, volumeH24Usd: 500_000, volumeH1Usd: 20_000, volumeToMcap: 0.55, liquidityToMcapPct: 13.3, txH1: null, txH24: { buys: 900, sells: 700, buyers: 400, sellers: 300 }, otherPools: [] },
+        observedAt: now, inWatchlist: false, venues: [{ name: 'Raydium', kind: 'dex', identifier: 'raydium', url: null, volume24hUsd: null, isKraken: false }], venuesNote: 'Pas de fiche CoinGecko : les plateformes centralisées ne peuvent pas être vérifiées, seuls les DEX sont listés.' }],
+      days: 1, retro: null, excludedByReason: [{ label: 'Liquidité insuffisante', count: 12 }], generatedAt: now, filterNote: null,
+    });
+    expect(md).toContain('# Dossier : résultats du scanner');
+    expect(md).toContain('220 pools vérifiés');
+    expect(md).toContain('- Liquidité insuffisante : 12');
+    expect(md).toMatch(/\| NEW \| 30 h \| \+180 % \| 900.k.\$ \(FDV\) \|/); // espaces fines de fr-FR
+    expect(md).toContain('Top 10 élevé LEVÉ (55)');
+    expect(md).toContain('Créateur en série non vérifié');
+    expect(md).toContain('Raydium (DEX)');
+    expect(md).toContain('un token gardé n\'est pas un token recommandé');
   });
 });
