@@ -14,6 +14,9 @@ export function tokensRoutes(app: FastifyInstance, s: Services, expensive: { con
     return envelope(h, items, { source: 'local' });
   });
 
+  /** Synthèses en cinq questions de toute la liste (lecture simple). Route statique : prioritaire sur /tokens/:id. */
+  app.get('/tokens/summaries', async () => envelope(h, s.summary.all(), { source: 'local' }));
+
   app.post('/tokens', expensive, async (req, reply) => {
     const body = AddTokenInput.parse(req.body);
     const token = await s.tokens.add(body.address);

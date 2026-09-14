@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { envelope } from '../plugins/envelope.js';
 import type { Services } from '../services/index.js';
 
-const ModuleParam = z.object({ module: z.enum(['watch', 'market', 'scanner']) });
+const ModuleParam = z.object({ module: z.enum(['watch', 'market', 'scanner', 'ui']) });
 const UpdateInput = z.object({ settings: z.unknown(), note: z.string().max(200).optional().nullable() });
 
 export function settingsRoutes(app: FastifyInstance, s: Services): void {

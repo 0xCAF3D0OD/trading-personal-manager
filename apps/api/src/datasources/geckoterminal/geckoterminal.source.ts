@@ -35,7 +35,10 @@ export interface GtTokenInfo {
   developerAddress: string | null;
   developerHoldingPct: number | null;
   gtScore: number | null;
+  /** Identifiant de la fiche CoinGecko quand le token en a une : la seule clé fiable vers ses marchés centralisés. */
+  coingeckoCoinId: string | null;
 }
+export interface CgTicker { name: string; identifier: string; target: string; volumeUsd: number | null; trustScore: string | null; tradeUrl: string | null }
 export interface GtToken { address: string; priceUsd: number | null; fdvUsd: number | null; marketCapUsd: number | null; volume24hUsd: number | null; totalReserveUsd: number | null }
 
 export class BreakerOpenError extends Error {
@@ -111,7 +114,25 @@ export class GeckoTerminalSource {
       isHoneypot: a.is_honeypot === undefined || a.is_honeypot === null ? null : String(a.is_honeypot),
       developerAddress: typeof a.developer_address === 'string' && a.developer_address ? a.developer_address : null,
       developerHoldingPct: num(a.developer_holding_percentage), gtScore: num(a.gt_score),
+      coingeckoCoinId: typeof a.coingecko_coin_id === 'string' && a.coingecko_coin_id.trim() ? a.coingecko_coin_id.trim() : null,
     };
+  }
+  /**
+   * Marchés d'une fiche CoinGecko (API publique, hors file GeckoTerminal : autre hôte, autre limite).
+   * Appelé rarement (TTL 24 h, tokens gardés seulement). Clé démo utilisée si présente.
+   */
+  async coinTickers(coinId: string): Promise<CgTicker[]> {
+    const base = this.demoBase.replace(/\/onchain\/?$/, '');
+    const headers: Record<string, string> = { accept: 'application/json' };
+    if (this.demoKey) headers['x-cg-demo-api-key'] = this.demoKey;
+    const r = await fetchJson<any>(this.deps, 'coingecko', 'coin_tickers', `${base}/coins/${encodeURIComponent(coinId)}/tickers?include_exchange_logo=false&order=volume_desc`, { headers, cu: 1 });
+    const out: CgTicker[] = [];
+    for (const t of Array.isArray(r?.tickers) ? r.tickers : []) {
+      const name = String(t?.market?.name ?? '').trim();
+      if (!name) continue;
+      out.push({ name, identifier: String(t?.market?.identifier ?? name.toLowerCase()), target: String(t?.target ?? ''), volumeUsd: num(t?.converted_volume?.usd), trustScore: typeof t?.trust_score === 'string' ? t.trust_score : null, tradeUrl: typeof t?.trade_url === 'string' ? t.trade_url : null });
+    }
+    return out;
   }
   async tokensMulti(mints: string[]): Promise<GtToken[]> {
     const out: GtToken[] = [];
