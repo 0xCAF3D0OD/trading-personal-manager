@@ -25,6 +25,14 @@ const copied = ref(false);
 const showPrompt = ref(false);
 const form = ref<{ provider: AiReportProvider; model: string; content: string; note: string }>({ provider: 'manuel', model: '', content: '', note: '' });
 const open = ref<number | null>(null);
+/** Liens directs vers l'API (même origine) : le navigateur télécharge le fichier, sans JavaScript. */
+const API = (import.meta.env.VITE_API_BASE as string | undefined) ?? '/api';
+const dossierExport = (format: 'md' | 'html') => `${API}/tokens/${id.value}/dossier/export?format=${format}`;
+const reportExport = (rid: number, format: 'md' | 'html') => `${API}/tokens/${id.value}/reports/${rid}/export?format=${format}`;
+async function copyReport(content: string) {
+  try { await navigator.clipboard.writeText(content); notify.push('success', 'Rapport copié.'); }
+  catch { notify.push('info', 'Copie refusée par le navigateur : ouvrez le rapport et sélectionnez le texte.'); }
+}
 
 async function copy() {
   wantDossier.value = true;
@@ -63,6 +71,8 @@ async function submit() {
       <div class="row">
         <button class="primary" :disabled="dossier.isFetching.value" @click="copy">{{ dossier.isFetching.value ? 'Préparation…' : copied ? 'Copié ✓' : 'Copier le dossier' }}</button>
         <button class="ghost" @click="wantDossier = true">Afficher</button>
+        <a :href="dossierExport('md')" download><button class="ghost">Télécharger .md</button></a>
+        <a :href="dossierExport('html')" download><button class="ghost" title="Page autonome, imprimable en PDF">Télécharger .html</button></a>
         <span class="faint small">{{ ui.settings.dossierIncludesPlan ? 'Le plan du journal est inclus (réglages, Affichage).' : 'Le plan du journal est exclu : il est personnel (réglages, Affichage).' }}</span>
       </div>
       <QueryState :loading="dossier.isLoading.value" :error="dossier.error.value" />
@@ -74,7 +84,7 @@ async function submit() {
 
     <section class="card">
       <h2>2. Coller un rapport</h2>
-      <p class="small muted">Le texte est conservé tel quel, avec la date, le fournisseur et l’empreinte du dossier. Il ne pourra plus être modifié.</p>
+      <p class="small muted">Le texte est conservé tel quel, avec la date, le fournisseur et l’empreinte du dossier. Il ne pourra plus être modifié. Chaque rapport conservé se partage ensuite en fichier : Markdown, ou page HTML autonome à envoyer telle quelle ou à imprimer en PDF.</p>
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
         <div><label>Fournisseur</label><select v-model="form.provider"><option value="manuel">Collé à la main</option><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI</option><option value="ollama">Ollama (local)</option></select></div>
         <div><label>Modèle (optionnel)</label><input v-model="form.model" placeholder="Ex. Claude Fable 5.1" /></div>
@@ -93,7 +103,12 @@ async function submit() {
         <article v-for="r in reports.data.value.data" :key="r.id" class="card" style="background:var(--bg-elev-2)">
           <div class="row" style="justify-content:space-between">
             <span><strong>{{ fmtDate(r.createdAt) }}</strong> · {{ r.provider }}{{ r.model ? ` · ${r.model}` : '' }} · dossier <code>{{ r.dossierHash }}</code> · consigne v{{ r.promptVersion }}</span>
-            <button class="ghost small" @click="open = open === r.id ? null : r.id">{{ open === r.id ? 'Replier' : 'Lire' }}</button>
+            <span class="row" style="gap:.25rem">
+              <button class="ghost small" @click="open = open === r.id ? null : r.id">{{ open === r.id ? 'Replier' : 'Lire' }}</button>
+              <button class="ghost small" @click="copyReport(r.content)">Copier</button>
+              <a :href="reportExport(r.id, 'md')" download><button class="ghost small">.md</button></a>
+              <a :href="reportExport(r.id, 'html')" download title="Page autonome, imprimable en PDF"><button class="ghost small">.html</button></a>
+            </span>
           </div>
           <p v-if="r.note" class="small muted" style="margin:.25rem 0 0">{{ r.note }}</p>
           <pre v-if="open === r.id" class="small" style="white-space:pre-wrap;margin:.5rem 0 0">{{ r.content }}</pre>
