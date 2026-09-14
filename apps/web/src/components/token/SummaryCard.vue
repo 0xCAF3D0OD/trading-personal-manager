@@ -30,5 +30,9 @@ function go(card: string) {
         </div>
       </li>
     </ol>
+    <p class="small" style="margin:.75rem 0 0">
+      <router-link :to="`/token/${summary.tokenId}/rapports`"><strong>Rapport IA →</strong></router-link>
+      <span class="muted"> copiez le dossier complet pour votre IA, ou branchez Claude Desktop, puis collez le rapport obtenu pour le conserver et le partager.</span>
+    </p>
   </section>
 </template>

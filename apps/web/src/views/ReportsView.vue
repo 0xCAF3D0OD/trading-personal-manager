@@ -54,14 +54,14 @@ async function submit() {
   <div class="stack" style="gap:1rem">
     <div class="row" style="justify-content:space-between;align-items:flex-start">
       <div>
-        <h1>Dossier et rapports <span class="muted" style="font-weight:400">{{ t?.symbol ?? shortAddr(t?.address) }}</span></h1>
+        <h1>Rapport IA <span class="muted" style="font-weight:400">{{ t?.symbol ?? shortAddr(t?.address) }}</span></h1>
         <p class="small muted" style="margin:0">Tout ce que la plateforme sait de ce token, en un texte daté et sourcé, à donner à l’IA de votre choix. Le rapport qu’elle rend peut être collé ici : il est alors figé, comme un plan du journal.</p>
       </div>
       <router-link :to="`/token/${id}`">← Fiche</router-link>
     </div>
 
     <section class="card">
-      <div class="card-head"><h2>1. Le dossier</h2><span class="faint small" v-if="dossier.data.value">généré {{ fmtDate(dossier.data.value.data.generatedAt) }} · empreinte <code>{{ dossier.data.value.data.hash }}</code>{{ dossier.data.value.data.includesPlan ? ' · plan inclus' : ' · plan exclu' }}</span></div>
+      <div class="card-head"><h2>1. Copier le dossier pour votre IA</h2><span class="faint small" v-if="dossier.data.value">généré {{ fmtDate(dossier.data.value.data.generatedAt) }} · empreinte <code>{{ dossier.data.value.data.hash }}</code>{{ dossier.data.value.data.includesPlan ? ' · plan inclus' : ' · plan exclu' }}</span></div>
       <p class="small muted">Trois façons de l’utiliser, sans clé ni coût supplémentaire.</p>
       <ol class="small" style="margin:0 0 .75rem;padding-left:1.2rem">
         <li><strong>Copier-coller</strong> dans n’importe quelle IA (claude.ai, ChatGPT, un modèle local). La consigne de rédaction est en tête du dossier.</li>
@@ -83,7 +83,7 @@ async function submit() {
     </section>
 
     <section class="card">
-      <h2>2. Coller un rapport</h2>
+      <h2>2. Coller le rapport obtenu</h2>
       <p class="small muted">Le texte est conservé tel quel, avec la date, le fournisseur et l’empreinte du dossier. Il ne pourra plus être modifié. Chaque rapport conservé se partage ensuite en fichier : Markdown, ou page HTML autonome à envoyer telle quelle ou à imprimer en PDF.</p>
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
         <div><label>Fournisseur</label><select v-model="form.provider"><option value="manuel">Collé à la main</option><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI</option><option value="ollama">Ollama (local)</option></select></div>

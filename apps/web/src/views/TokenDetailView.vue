@@ -67,9 +67,9 @@ async function refreshHealth() {
         </div>
         <div class="stack" style="align-items:flex-end">
           <div class="row">
-            <router-link :to="`/token/${t.id}/rapports`"><button title="Copier le dossier pour une IA, conserver ses rapports">Dossier IA</button></router-link>
+            <router-link :to="`/token/${t.id}/rapports`"><button class="primary" title="Copier le dossier pour une IA, coller et conserver le rapport obtenu, l’exporter">Rapport IA</button></router-link>
             <router-link :to="`/token/${t.id}/veille`"><button>Veille</button></router-link>
-            <router-link :to="`/token/${t.id}/journal`"><button class="primary">Journal de discipline</button></router-link>
+            <router-link :to="`/token/${t.id}/journal`"><button>Journal de discipline</button></router-link>
           </div>
           <span v-if="currentPlan" class="small muted">Plan v{{ currentPlan.version }} · stop {{ currentPlan.stopLossPrice }} · objectif {{ currentPlan.takeProfitPrice }}</span>
           <span v-else class="small down">Aucun plan enregistré</span>
