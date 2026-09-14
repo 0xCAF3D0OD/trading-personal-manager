@@ -143,8 +143,11 @@ export class SolanaRpcSource {
       if (meta) {
         name = meta.name || null;
         symbol = meta.symbol || null;
-        const verified = meta.creators.find((c) => c.verified);
-        creator = verified?.address ?? meta.creators[0]?.address ?? meta.updateAuthority ?? null;
+        // Une adresse nulle (programme système) n'est pas un créateur : métadonnées immuables ou slot vide.
+        const real = (a: string | undefined): string | null => (a && a !== SYSTEM_PROGRAM ? a : null);
+        const creators = meta.creators.filter((c) => real(c.address));
+        const verified = creators.find((c) => c.verified);
+        creator = real(verified?.address) ?? real(creators[0]?.address) ?? real(meta.updateAuthority);
       }
     }
     // La PDA de métadonnées a très peu de transactions : sa plus ancienne signature ≈ création du token.

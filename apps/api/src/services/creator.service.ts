@@ -1,4 +1,6 @@
 import type { SourceName } from '@tpm/shared';
+import { isSolanaAddress } from '@tpm/shared';
+import { SYSTEM_PROGRAM } from '../datasources/rpc/solana-rpc.source.js';
 import { TTL } from '../cache/ttl-policy.js';
 import type { CreatorActivityRow } from '../db/repositories/creator.repo.js';
 import { AppContext } from './context.js';
@@ -21,13 +23,15 @@ export class CreatorService {
   async get(tokenId: number): Promise<{ value: CreatorView; cached: boolean }> {
     const token = this.tokens.require(tokenId);
     const source = this.ctx.sources.creatorActivitySource;
+    // Défense en profondeur : une adresse stockée invalide ou nulle ne doit jamais atteindre Helius (HTTP 400).
+    const creatorOk = !!token.creator_address && isSolanaAddress(token.creator_address) && token.creator_address !== SYSTEM_PROGRAM;
     const base: CreatorView = {
-      creatorAddress: token.creator_address, available: !!source && !!token.creator_address,
+      creatorAddress: creatorOk ? token.creator_address : null, available: !!source && creatorOk,
       missingVariable: source ? null : 'HELIUS_API_KEY', source: source ?? 'unavailable', fetchedAt: null, activities: [],
     };
-    if (!source || !token.creator_address) return { value: { ...base, activities: this.stored(tokenId) }, cached: true };
+    if (!source || !creatorOk) return { value: { ...base, activities: this.stored(tokenId) }, cached: true };
 
-    const creator = token.creator_address;
+    const creator = token.creator_address as string;
     const hit = await this.ctx.cache.getOrFetch<number>(`creator-activity:${token.id}`, TTL.creatorActivity, async () => {
       const list = source === 'helius'
         ? await this.ctx.sources.helius!.getAddressActivities(creator, token.address)
