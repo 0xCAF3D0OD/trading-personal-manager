@@ -7,6 +7,22 @@ interface MarketRow {
   price_alt_usd: number | null; price_alt_source: string | null;
   market_cap_usd: number | null; fdv_usd: number | null; volume_24h_usd: number | null;
   liquidity_usd: number | null; supply_circ: number | null; supply_total: number | null; supply_source: string;
+  pct_m5?: number | null; pct_h1?: number | null; pct_h6?: number | null; pct_h24?: number | null;
+  momentum_state?: string | null; price_spread_pct?: number | null;
+  mcap_source_name?: string | null; mcap_source_is_fdv?: number | null; mcap_local_usd?: number | null; fdv_local_usd?: number | null; mcap_gap_pct?: number | null;
+  volume_source?: string | null; liquidity_source?: string | null; liquidity_to_mcap_pct?: number | null; volume_to_mcap?: number | null;
+  pools?: string | null; pools_count?: number | null; liquidity_total_usd?: number | null;
+  supply_minted?: number | null; supply_incinerated?: number | null; supply_net?: number | null; supply_incinerator_addresses?: string | null;
+}
+
+/** Colonnes étendues d'un relevé marché (0.3.1). Toutes optionnelles pour rester compatibles avec l'ancien appel. */
+export interface MarketExtras {
+  pctM5?: number | null; pctH1?: number | null; pctH6?: number | null; pctH24?: number | null;
+  momentumState?: string | null; priceSpreadPct?: number | null;
+  mcapSourceName?: string | null; mcapSourceIsFdv?: boolean | null; mcapLocalUsd?: number | null; fdvLocalUsd?: number | null; mcapGapPct?: number | null;
+  volumeSource?: string | null; liquiditySource?: string | null; liquidityToMcapPct?: number | null; volumeToMcap?: number | null;
+  pools?: unknown; poolsCount?: number | null; liquidityTotalUsd?: number | null;
+  supplyMinted?: number | null; supplyIncinerated?: number | null; supplyNet?: number | null; supplyIncineratorAddresses?: unknown;
 }
 
 interface HolderRow {
@@ -29,6 +45,15 @@ export function toMarket(r: MarketRow): MarketSnapshot {
     marketCapUsd: r.market_cap_usd, fdvUsd: r.fdv_usd, volume24hUsd: r.volume_24h_usd,
     liquidityUsd: r.liquidity_usd, supplyCirc: r.supply_circ, supplyTotal: r.supply_total,
     supplySource: r.supply_source as SourceName,
+    pctM5: r.pct_m5 ?? null, pctH1: r.pct_h1 ?? null, pctH6: r.pct_h6 ?? null, pctH24: r.pct_h24 ?? null,
+    momentumState: r.momentum_state ?? null, priceSpreadPct: r.price_spread_pct ?? null,
+    mcapSourceName: (r.mcap_source_name as SourceName | null | undefined) ?? null,
+    mcapSourceIsFdv: r.mcap_source_is_fdv === null || r.mcap_source_is_fdv === undefined ? null : r.mcap_source_is_fdv === 1,
+    mcapLocalUsd: r.mcap_local_usd ?? null, fdvLocalUsd: r.fdv_local_usd ?? null, mcapGapPct: r.mcap_gap_pct ?? null,
+    volumeSource: (r.volume_source as SourceName | null | undefined) ?? null, liquiditySource: (r.liquidity_source as SourceName | null | undefined) ?? null,
+    liquidityToMcapPct: r.liquidity_to_mcap_pct ?? null, volumeToMcap: r.volume_to_mcap ?? null,
+    poolsCount: r.pools_count ?? null, liquidityTotalUsd: r.liquidity_total_usd ?? null,
+    supplyMinted: r.supply_minted ?? null, supplyIncinerated: r.supply_incinerated ?? null, supplyNet: r.supply_net ?? null,
   };
 }
 
@@ -45,18 +70,43 @@ export function toHolder(r: HolderRow): HolderSnapshot {
 export class SnapshotsRepo {
   constructor(private readonly db: Db) {}
 
-  insertMarket(s: Omit<MarketSnapshot, 'id'>): number {
+  insertMarket(s: Omit<MarketSnapshot, 'id'> & MarketExtras): number {
     const r = this.db
       .prepare(
         `INSERT INTO market_snapshots (token_id, ts, price_usd, price_source, price_alt_usd, price_alt_source,
-           market_cap_usd, fdv_usd, volume_24h_usd, liquidity_usd, supply_circ, supply_total, supply_source)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           market_cap_usd, fdv_usd, volume_24h_usd, liquidity_usd, supply_circ, supply_total, supply_source,
+           pct_m5, pct_h1, pct_h6, pct_h24, momentum_state, price_spread_pct,
+           mcap_source_name, mcap_source_is_fdv, mcap_local_usd, fdv_local_usd, mcap_gap_pct,
+           volume_source, liquidity_source, liquidity_to_mcap_pct, volume_to_mcap, pools, pools_count, liquidity_total_usd,
+           supply_minted, supply_incinerated, supply_net, supply_incinerator_addresses)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         s.tokenId, s.ts, s.priceUsd, s.priceSource, s.priceAltUsd, s.priceAltSource,
         s.marketCapUsd, s.fdvUsd, s.volume24hUsd, s.liquidityUsd, s.supplyCirc, s.supplyTotal, s.supplySource,
+        s.pctM5 ?? null, s.pctH1 ?? null, s.pctH6 ?? null, s.pctH24 ?? null, s.momentumState ?? null, s.priceSpreadPct ?? null,
+        s.mcapSourceName ?? null, s.mcapSourceIsFdv === undefined || s.mcapSourceIsFdv === null ? null : s.mcapSourceIsFdv ? 1 : 0,
+        s.mcapLocalUsd ?? null, s.fdvLocalUsd ?? null, s.mcapGapPct ?? null,
+        s.volumeSource ?? null, s.liquiditySource ?? null, s.liquidityToMcapPct ?? null, s.volumeToMcap ?? null,
+        s.pools === undefined ? null : JSON.stringify(s.pools), s.poolsCount ?? null, s.liquidityTotalUsd ?? null,
+        s.supplyMinted ?? null, s.supplyIncinerated ?? null, s.supplyNet ?? null,
+        s.supplyIncineratorAddresses === undefined ? null : JSON.stringify(s.supplyIncineratorAddresses),
       );
     return Number(r.lastInsertRowid);
+  }
+
+  /** Les N derniers relevés, du plus récent au plus ancien. */
+  lastMarket(tokenId: number, n: number): MarketSnapshot[] {
+    return (this.db.prepare('SELECT * FROM market_snapshots WHERE token_id = ? ORDER BY ts DESC LIMIT ?').all(tokenId, n) as unknown as MarketRow[]).map(toMarket);
+  }
+
+  insertSlippage(rows: { tokenId: number; ts: number; orderUsd: number; impactPct: number | null; method: string; route: string[]; poolAddress: string | null }[]): void {
+    const stmt = this.db.prepare(`INSERT OR IGNORE INTO slippage_snapshots (token_id, ts, order_usd, side, impact_pct, method, route, pool_address) VALUES (?, ?, ?, 'sell', ?, ?, ?, ?)`);
+    for (const r of rows) stmt.run(r.tokenId, r.ts, r.orderUsd, r.impactPct, r.method, JSON.stringify(r.route), r.poolAddress);
+  }
+
+  slippageHistory(tokenId: number, sinceTs: number): { ts: number; orderUsd: number; impactPct: number | null; method: string }[] {
+    return (this.db.prepare('SELECT ts, order_usd AS orderUsd, impact_pct AS impactPct, method FROM slippage_snapshots WHERE token_id = ? AND ts >= ? ORDER BY ts ASC').all(tokenId, sinceTs) as unknown as { ts: number; orderUsd: number; impactPct: number | null; method: string }[]);
   }
 
   latestMarket(tokenId: number): MarketSnapshot | null {

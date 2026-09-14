@@ -2,10 +2,13 @@ import type { DataCapability, SourceName, SourcesView, Tier } from '@tpm/shared'
 import type { Env } from '../config/env.js';
 import type { UsageRepo } from '../db/repositories/usage.repo.js';
 import { DexScreenerSource } from './dexscreener/dexscreener.source.js';
+import { GeckoTerminalSource } from './geckoterminal/geckoterminal.source.js';
+import type { ScannerSettings } from '@tpm/shared';
 import { SourceHealth } from './health.js';
 import { HeliusSource } from './helius/helius.source.js';
 import type { HttpDeps } from './http.js';
 import { JupiterPriceSource } from './jupiter/jupiter-price.source.js';
+import { JupiterQuoteSource } from './jupiter/jupiter-quote.source.js';
 import { SolanaRpcSource } from './rpc/solana-rpc.source.js';
 import { RugCheckSource } from './rugcheck/rugcheck.source.js';
 import { SolscanClient } from './solscan/solscan.client.js';
@@ -21,6 +24,10 @@ export class DataSourceRegistry {
   readonly rpc: SolanaRpcSource;
   readonly dexscreener: DexScreenerSource;
   readonly jupiter: JupiterPriceSource;
+  readonly jupiterQuote: JupiterQuoteSource;
+  readonly geckoterminal: GeckoTerminalSource;
+  /** Fourni par le service de réglages après construction (évite une dépendance circulaire). */
+  scannerRateCfg: () => ScannerSettings['rateLimit'] = () => ({ callsPerMinute: 8, maxBackoffMs: 120_000, breakerAfterConsecutive429: 3, breakerPauseS: 300 });
   readonly rugcheck: RugCheckSource;
   readonly helius: HeliusSource | null;
   readonly solscan: SolscanSource | null;
@@ -31,6 +38,8 @@ export class DataSourceRegistry {
     this.rpc = new SolanaRpcSource(deps, env.SOLANA_RPC_URL, env.isHelius);
     this.dexscreener = new DexScreenerSource(deps, env.DEXSCREENER_BASE_URL);
     this.jupiter = new JupiterPriceSource(deps, env.JUPITER_PRICE_URL);
+    this.jupiterQuote = new JupiterQuoteSource(deps, env.JUPITER_QUOTE_URL);
+    this.geckoterminal = new GeckoTerminalSource(deps, env.GECKOTERMINAL_BASE_URL, env.COINGECKO_ONCHAIN_BASE_URL, env.COINGECKO_DEMO_API_KEY, () => this.scannerRateCfg());
     this.rugcheck = new RugCheckSource(deps, env.RUGCHECK_BASE_URL);
     this.helius = env.isHelius ? new HeliusSource(deps, env.SOLANA_RPC_URL, env.heliusApiKey, env.HELIUS_MAX_HOLDER_PAGES) : null;
     this.solscan = env.SOLSCAN_API_KEY
@@ -42,6 +51,8 @@ export class DataSourceRegistry {
     this.health.configure('dexscreener', true);
     this.health.configure('jupiter', true);
     this.health.configure('rugcheck', true);
+    this.health.configure('geckoterminal', true);
+    this.health.configure('coingecko', !!env.COINGECKO_DEMO_API_KEY);
     this.health.configure('helius', !!this.helius);
     this.health.configure('solscan', !!this.solscan);
   }
@@ -72,6 +83,9 @@ export class DataSourceRegistry {
       cap('price_alt', 'Prix de référence secondaire', 'jupiter', true, null),
       cap('creator', 'Créateur et date de création', 'rpc', true, null),
       cap('lp_lock', 'Liquidité verrouillée', 'rugcheck', true, null),
+      cap('slippage', 'Slippage estimé (simulation de route)', 'jupiter', true, null),
+      cap('scanner_discovery', 'Scanner : découverte des nouveaux pools', 'geckoterminal', true, null),
+      cap('scanner_creator', 'Scanner : créateur en série (alerte zéro drapeau)', helius ? 'helius' : 'unavailable', helius, helius ? null : 'SOLANA_RPC_URL (Helius)'),
       cap('top20', 'Concentration top 5 / 10 / 20', 'rpc', true, null),
       cap('top100', 'Concentration top 50 / 100 et tranches', this.holdersSource, helius || solscan, helius || solscan ? null : 'SOLANA_RPC_URL (Helius)'),
       cap('holder_count', 'Nombre total de détenteurs', this.holdersSource, helius || solscan, helius || solscan ? null : 'SOLANA_RPC_URL (Helius)'),

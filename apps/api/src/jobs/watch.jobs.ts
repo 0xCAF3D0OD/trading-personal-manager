@@ -25,3 +25,16 @@ export async function runWatchMaintenance(s: Services): Promise<string> {
   const r = s.watchPages.maintenance();
   return `${r.rawPurged} corps bruts purgés, ${r.checksPurged} relevés purgés`;
 }
+
+export async function runMarketSlippage(s: Services): Promise<string> {
+  const n = await s.slippage.snapshotAll();
+  return `${n} point(s) de slippage`;
+}
+
+export async function runScanDiscover(s: Services): Promise<string> {
+  const r = await s.scanner.discover();
+  return `${r.seen} pools vus, ${r.inserted} nouveaux, ${r.ignored} ignorés`;
+}
+export async function runScanEvaluate(s: Services): Promise<string> { return s.scanner.evaluate(); }
+export async function runScanRetro(s: Services): Promise<string> { return `${await s.scanner.retro()} horizon(s) rempli(s)`; }
+export async function runScanMaintenance(s: Services): Promise<string> { return s.scanner.maintenance(); }

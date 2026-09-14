@@ -20,6 +20,12 @@ export const AlertType = z.enum([
   'team_transfer_to_exchange',
   'team_lp_remove',
   'team_sell',
+  'price_spread',
+  'liq_withdrawal',
+  'div_liquidity_withdrawal',
+  'div_unconfirmed_rise',
+  'div_announced_burn_no_supply_change',
+  'scanner_clean_candidate',
 ]);
 export type AlertType = z.infer<typeof AlertType>;
 

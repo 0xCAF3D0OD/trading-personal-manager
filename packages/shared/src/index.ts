@@ -9,3 +9,7 @@ export * from './schemas/alert.schema.js';
 export * from './schemas/system.schema.js';
 export * from './schemas/watch.schema.js';
 export * from './defaults/watch.js';
+export * from './schemas/market.schema.js';
+export * from './defaults/market.js';
+export * from './schemas/scanner.schema.js';
+export * from './defaults/scanner.js';

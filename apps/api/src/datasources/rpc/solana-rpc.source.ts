@@ -53,12 +53,19 @@ export class SolanaRpcSource {
     const extensions: string[] = Array.isArray(info.extensions)
       ? info.extensions.map((e: { extension?: string }) => e.extension ?? 'unknown')
       : [];
+    let transferFeeBps: number | null = null;
+    if (Array.isArray(info.extensions)) {
+      const fee = info.extensions.find((e: { extension?: string }) => e.extension === 'transferFeeConfig');
+      const bps = Number(fee?.state?.newerTransferFee?.transferFeeBasisPoints ?? fee?.state?.olderTransferFee?.transferFeeBasisPoints);
+      if (Number.isFinite(bps)) transferFeeBps = bps;
+    }
     return {
       address: mint, program, decimals, supplyRaw,
       supply: Number(supplyRaw) / 10 ** decimals,
       mintAuthority: info.mintAuthority ?? null,
       freezeAuthority: info.freezeAuthority ?? null,
       extensions,
+      transferFeeBps,
     };
   }
 
@@ -66,6 +73,19 @@ export class SolanaRpcSource {
     const r = await this.call<{ value: { amount: string; decimals: number; uiAmount: number | null } }>('getTokenSupply', [mint, { commitment: 'confirmed' }]);
     const decimals = r.value.decimals;
     return { supply: Number(r.value.amount) / 10 ** decimals, decimals, source: 'rpc' };
+  }
+
+  /** Solde total d'un mint détenu par un propriétaire (somme de ses comptes token). */
+  async getOwnerTokenBalance(owner: string, mint: string, decimals: number): Promise<number> {
+    const r = await this.call<{ value: { account: { data: { parsed?: { info?: { tokenAmount?: { amount?: string } } } } } }[] }>(
+      'getTokenAccountsByOwner', [owner, { mint }, { encoding: 'jsonParsed', commitment: 'confirmed' }],
+    );
+    let total = 0n;
+    for (const acc of r.value ?? []) {
+      const raw = acc.account?.data?.parsed?.info?.tokenAmount?.amount;
+      if (raw) total += BigInt(raw);
+    }
+    return Number(total) / 10 ** decimals;
   }
 
   /** Top 20 comptes token, propriétaires résolus. */

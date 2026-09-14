@@ -18,8 +18,10 @@ describe('Divergences', () => {
     const { db, services } = testServices();
     const tokenId = insertToken(db);
     const d = services.divergences.compute(tokenId);
-    expect(d).toHaveLength(4);
-    expect(d.every((x) => x.status === 'insufficient_data')).toBe(true);
+    expect(d).toHaveLength(7);
+    // Sans engagement de burn enregistré, la règle « burn annoncé » n'a rien à vérifier : ok, pas insuffisant.
+    expect(d.filter((x) => x.id !== 'announced_burn_no_supply_change').every((x) => x.status === 'insufficient_data')).toBe(true);
+    expect(d.find((x) => x.id === 'announced_burn_no_supply_change')!.status).toBe('ok');
   });
 
   it('détecte la distribution : détenteurs en hausse, capitalisation en baisse', () => {

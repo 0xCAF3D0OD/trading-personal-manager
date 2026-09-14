@@ -16,6 +16,27 @@ export const MarketSnapshot = z.object({
   supplyCirc: z.number().nullable(),
   supplyTotal: z.number().nullable(),
   supplySource: SourceName,
+  // Métriques affinées (0.3.1), nullables sur les anciens relevés
+  pctM5: z.number().nullable().optional(),
+  pctH1: z.number().nullable().optional(),
+  pctH6: z.number().nullable().optional(),
+  pctH24: z.number().nullable().optional(),
+  momentumState: z.string().nullable().optional(),
+  priceSpreadPct: z.number().nullable().optional(),
+  mcapSourceName: SourceName.nullable().optional(),
+  mcapSourceIsFdv: z.boolean().nullable().optional(),
+  mcapLocalUsd: z.number().nullable().optional(),
+  fdvLocalUsd: z.number().nullable().optional(),
+  mcapGapPct: z.number().nullable().optional(),
+  volumeSource: SourceName.nullable().optional(),
+  liquiditySource: SourceName.nullable().optional(),
+  liquidityToMcapPct: z.number().nullable().optional(),
+  volumeToMcap: z.number().nullable().optional(),
+  poolsCount: z.number().nullable().optional(),
+  liquidityTotalUsd: z.number().nullable().optional(),
+  supplyMinted: z.number().nullable().optional(),
+  supplyIncinerated: z.number().nullable().optional(),
+  supplyNet: z.number().nullable().optional(),
 });
 export type MarketSnapshot = z.infer<typeof MarketSnapshot>;
 

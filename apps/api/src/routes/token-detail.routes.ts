@@ -65,12 +65,13 @@ export function tokenDetailRoutes(app: FastifyInstance, s: Services, expensive: 
   app.get('/tokens/:id/history', async (req) => {
     const { id } = IdParam.parse(req.params);
     const { days } = RangeQuery.parse(req.query);
-    s.tokens.require(id);
-    const since = nowS() - days * 86400;
-    return envelope(h, {
-      market: s.ctx.snapshots.marketSince(id, since),
-      holders: s.ctx.snapshots.holderHistory(id, since),
-    }, { source: 'local' });
+    return envelope(h, s.market.history(id, days), { source: 'local' });
+  });
+
+  app.get('/tokens/:id/slippage', async (req) => {
+    const { id } = IdParam.parse(req.params);
+    const r = await s.slippage.estimate(id);
+    return envelope(h, r, { source: 'jupiter', fetchedAt: r.sizes[0]?.fetchedAt ?? nowS(), cached: false });
   });
 
   app.get('/tokens/:id/creator', async (req) => {

@@ -9,6 +9,8 @@ export interface MintInfo {
   mintAuthority: string | null;
   freezeAuthority: string | null;
   extensions: string[];
+  /** Frais de transfert Token-2022 en points de base, null si absent */
+  transferFeeBps: number | null;
 }
 
 export interface SupplyInfo {
@@ -42,6 +44,7 @@ export interface PairInfo {
   priceUsd: number | null;
   priceChange: { m5: number | null; h1: number | null; h6: number | null; h24: number | null };
   volume24hUsd: number | null;
+  volumeM5Usd: number | null;
   liquidityUsd: number | null;
   fdvUsd: number | null;
   marketCapUsd: number | null;

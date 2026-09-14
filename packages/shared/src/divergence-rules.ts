@@ -7,7 +7,10 @@ export type DivergenceId =
   | 'distribution'
   | 'avg_position'
   | 'concentration_down_price_up'
-  | 'burn_slowdown';
+  | 'burn_slowdown'
+  | 'liquidity_withdrawal'
+  | 'unconfirmed_rise'
+  | 'announced_burn_no_supply_change';
 
 export interface DivergenceRule {
   id: DivergenceId;
@@ -51,6 +54,30 @@ export const DIVERGENCE_RULES: readonly DivergenceRule[] = [
     ruleText:
       'Quantité brûlée sur les 7 derniers jours inférieure à 50 % de celle des 7 jours précédents.',
     params: { maxRatioPct: 50 },
+  },
+  {
+    id: 'liquidity_withdrawal',
+    label: 'Retrait de liquidité',
+    windowDays: 7,
+    ruleText:
+      'Ratio liquidité / capitalisation en baisse d’au moins 20 % sur 7 jours ET prix stable ou en hausse (au-dessus de −5 %) : des fournisseurs de liquidité retirent leurs fonds sans que le marché ne réagisse.',
+    params: { ratioDropPct: 20, priceFloorPct: -5 },
+  },
+  {
+    id: 'unconfirmed_rise',
+    label: 'Hausse non confirmée par les flux',
+    windowDays: 7,
+    ruleText:
+      'Volume 24 h (même source) en baisse d’au moins 30 % sur 7 jours ET prix en hausse d’au moins 15 % : la hausse ne s’appuie pas sur des échanges.',
+    params: { volumeDropPct: 30, priceRisePct: 15 },
+  },
+  {
+    id: 'announced_burn_no_supply_change',
+    label: 'Burn annoncé sans baisse d’offre',
+    windowDays: 7,
+    ruleText:
+      'Un engagement de burn est enregistré (en attente ou tenu) ET l’offre nette a baissé de moins de 0,1 % sur sa fenêtre : revenus taris, ou promesse non tenue.',
+    params: { maxSupplyDropPct: 0.1 },
   },
 ] as const;
 

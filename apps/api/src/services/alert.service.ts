@@ -1,4 +1,5 @@
-import { getDivergenceRule, type Alert, type AlertType, type CreateAlertInput, type DivergenceId } from '@tpm/shared';
+import { getDivergenceRule, type Alert, type AlertType, type CreateAlertInput, type DivergenceId, type MarketSettings } from '@tpm/shared';
+import type { SettingsService } from './settings.service.js';
 import type { AlertRow } from '../db/repositories/alerts.repo.js';
 import { nowS } from '../db/client.js';
 import { AppContext, NotFoundError, ValidationError } from './context.js';
@@ -12,6 +13,9 @@ const DIV_ALERT_TO_RULE: Partial<Record<AlertType, DivergenceId>> = {
   div_avg_position: 'avg_position',
   div_concentration_down_price_up: 'concentration_down_price_up',
   div_burn_slowdown: 'burn_slowdown',
+  div_liquidity_withdrawal: 'liquidity_withdrawal',
+  div_unconfirmed_rise: 'unconfirmed_rise',
+  div_announced_burn_no_supply_change: 'announced_burn_no_supply_change',
 };
 
 export class AlertService {
@@ -21,6 +25,7 @@ export class AlertService {
     private readonly market: MarketService,
     private readonly divergences: DivergenceService,
     private readonly hub: NotifierHub,
+    private readonly settings: SettingsService,
   ) {}
 
   list(tokenId?: number): Alert[] {
@@ -45,13 +50,17 @@ export class AlertService {
     this.ctx.alerts.delete(id);
   }
 
-  /** Crée les 4 alertes de divergence pour un token s'il ne les a pas encore. */
+  /** Crée les alertes structurelles (divergences, écart de prix, retrait de liquidité) pour un token s'il ne les a pas encore. */
   ensureDivergenceAlerts(tokenId: number): void {
     for (const type of Object.keys(DIV_ALERT_TO_RULE) as AlertType[]) {
-      if (!this.ctx.alerts.existsForToken(tokenId, type)) {
-        this.ctx.alerts.insert({ tokenId, type, threshold: null, planId: null, cooldownS: 24 * 3600 });
-      }
+      if (!this.ctx.alerts.existsForToken(tokenId, type)) this.ctx.alerts.insert({ tokenId, type, threshold: null, planId: null, cooldownS: 24 * 3600 });
     }
+    if (!this.ctx.alerts.existsForToken(tokenId, 'liq_withdrawal')) this.ctx.alerts.insert({ tokenId, type: 'liq_withdrawal', threshold: null, planId: null, cooldownS: this.marketCfg().liqWithdrawal.cooldownS });
+    if (!this.ctx.alerts.existsForToken(tokenId, 'price_spread')) this.ctx.alerts.insert({ tokenId, type: 'price_spread', threshold: null, planId: null, cooldownS: 6 * 3600 });
+  }
+
+  private marketCfg(): MarketSettings {
+    return this.settings.get<MarketSettings>('market');
   }
 
   async sendTest(): Promise<{ channel: string; ok: boolean; error: string | null }[]> {
@@ -120,6 +129,17 @@ export class AlertService {
       if (d?.status === 'triggered') return { observed: d.seriesA.changePct, payload: { explanation: d.explanation, seriesA: d.seriesA, seriesB: d.seriesB } };
       return null;
     }
+    if (a.type === 'liq_withdrawal') {
+      const r = this.market.liquidityWithdrawal(a.token_id);
+      return r.triggered ? { observed: r.now?.ratioPct ?? null, payload: { explanation: r.reason, window: r.window } } : null;
+    }
+    if (a.type === 'price_spread') {
+      const view = (await this.market.getView(a.token_id)).value;
+      const p = view.price;
+      return p.spreadConsecutiveOver >= this.marketCfg().priceSpreadAlertConsecutive
+        ? { observed: p.spreadPct, payload: { explanation: `Écart DexScreener / Jupiter de ${p.spreadPct?.toFixed(2)} % sur ${p.spreadConsecutiveOver} relevés consécutifs : liquidité fragmentée ou routage défaillant, l’arbitrage ne fonctionne pas.` } }
+        : null;
+    }
     if (a.type === 'mint_authority_changed' || a.type === 'freeze_authority_changed') {
       const token = this.tokens.require(a.token_id);
       const stored = this.ctx.health.get(a.token_id);
@@ -174,6 +194,9 @@ export class AlertService {
     switch (a.type) {
       case 'price_above': return `Prix au-dessus de ${fmt(a.threshold)}`;
       case 'price_below': return `Prix en dessous de ${fmt(a.threshold)}`;
+      case 'price_spread': return `Écart entre DexScreener et Jupiter supérieur à ${this.marketCfg().priceSpreadWarnPct} % sur ${this.marketCfg().priceSpreadAlertConsecutive} relevés consécutifs.`;
+      case 'liq_withdrawal': return `Ratio liquidité / capitalisation en baisse de ${this.marketCfg().liqWithdrawal.ratioDropPct24h} % sur 24 h (ou liquidité du pool −${this.marketCfg().liqWithdrawal.liqDropPct6h} % sur 6 h) pendant que le prix reste au-dessus de ${this.marketCfg().liqWithdrawal.priceFloorPct} %.`;
+      case 'scanner_clean_candidate': return 'Un token passe les cinq filtres structurels du scanner sans aucun drapeau, toutes vérifications faites. Une seule fois par token.';
       case 'plan_tp': return `Sortie en gain fixée à ${fmt(a.threshold)}${planRef}`;
       case 'plan_sl': return `Sortie en perte fixée à ${fmt(a.threshold)}${planRef} — la règle que vous vous étiez fixée est atteinte.`;
       case 'plan_entry': return `Prix d’entrée cible ${fmt(a.threshold)} atteint${planRef}`;
@@ -210,11 +233,15 @@ function labelOf(t: AlertType): string {
     watch_unannounced_change: 'Modifié sans communication', watch_claim_contradicted: 'Engagement contredit',
     watch_claim_due: 'Engagement arrivé à échéance', team_transfer_to_exchange: 'Transfert équipe vers un exchange',
     team_lp_remove: 'Retrait de liquidité par l’équipe', team_sell: 'Vente par l’équipe',
+    price_spread: 'Écart de prix persistant entre sources', liq_withdrawal: 'Retrait de liquidité',
+    div_liquidity_withdrawal: 'Divergence : retrait de liquidité', div_unconfirmed_rise: 'Divergence : hausse non confirmée',
+    div_announced_burn_no_supply_change: 'Divergence : burn annoncé sans baisse d’offre',
+    scanner_clean_candidate: 'Scanner : candidat sans drapeau',
   };
   return m[t];
 }
 function tagOf(t: AlertType): string {
-  if (t === 'plan_sl' || t.endsWith('_changed') || t === 'watch_tokenomics_change' || t === 'watch_unannounced_change' || t.startsWith('team_')) return 'rotating_light';
+  if (t === 'plan_sl' || t.endsWith('_changed') || t === 'watch_tokenomics_change' || t === 'watch_unannounced_change' || t.startsWith('team_') || t === 'liq_withdrawal') return 'rotating_light';
   if (t.startsWith('watch_')) return 'mag';
   if (t === 'plan_tp') return 'moneybag';
   if (t.startsWith('div_')) return 'warning';
