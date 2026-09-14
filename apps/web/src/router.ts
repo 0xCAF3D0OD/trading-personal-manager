@@ -9,6 +9,8 @@ export const router = createRouter({
     { path: '/token/:id(\\d+)/veille', name: 'watch', component: () => import('./views/WatchView.vue'), props: (r) => ({ id: Number(r.params.id) }) },
     { path: '/alerts', name: 'alerts', component: () => import('./views/AlertsView.vue') },
     { path: '/system', name: 'system', component: () => import('./views/SystemView.vue') },
+    { path: '/settings', name: 'settings', component: () => import('./views/SettingsView.vue') },
+    { path: '/scanner', name: 'scanner', component: () => import('./views/ScannerView.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 });

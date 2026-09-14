@@ -2,15 +2,23 @@
 import type { Divergence } from '@tpm/shared';
 import TimeSeriesChart from '@/components/charts/TimeSeriesChart.vue';
 import StatusBadge from '@/components/shared/StatusBadge.vue';
+import { computed, ref } from 'vue';
 import { fmtPct } from '@/composables/useFormat';
-defineProps<{ divergences: Divergence[] }>();
+const props = defineProps<{ divergences: Divergence[] }>();
+const showAll = ref(false);
+const triggered = computed(() => props.divergences.filter((d) => d.status === 'triggered'));
+const shown = computed(() => (showAll.value ? props.divergences : triggered.value));
 </script>
 <template>
   <section class="card">
-    <div class="card-head"><h2>Détection de divergences</h2><span class="faint small">calculé sur les snapshots quotidiens</span></div>
+    <div class="card-head">
+      <h2>Détection de divergences</h2>
+      <div class="row"><span class="faint small">{{ triggered.length }} anormale(s) sur {{ divergences.length }} règles</span><button class="ghost small" @click="showAll = !showAll">{{ showAll ? 'Seulement les anormales' : 'Tout afficher' }}</button></div>
+    </div>
     <p class="small muted">Chaque règle est affichée avec les deux séries qui la composent. Pas de voyant unique.</p>
+    <div v-if="!shown.length" class="empty">Aucune divergence anormale sur les séries historisées.</div>
     <div class="grid grid-2">
-      <article v-for="d in divergences" :key="d.id" class="card" style="background: var(--bg-elev-2)">
+      <article v-for="d in shown" :key="d.id" class="card" style="background: var(--bg-elev-2)">
         <div class="card-head"><h3 style="color:var(--text)">{{ d.label }}</h3><StatusBadge :status="d.status" /></div>
         <p class="small faint">Règle : {{ d.ruleText }}</p>
         <p class="small">{{ d.explanation }}</p>

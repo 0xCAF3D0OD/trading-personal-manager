@@ -24,6 +24,9 @@ export function useDivergences(id: Ref<number>) {
 export function useHistory(id: Ref<number>, days: Ref<number>) {
   return useQuery({ queryKey: computed(() => qk.history(id.value, days.value)), queryFn: () => tokensApi.history(id.value, days.value), staleTime: 5 * 60_000 });
 }
+export function useSlippage(id: Ref<number>, enabled: Ref<boolean>) {
+  return useQuery({ queryKey: computed(() => ['tokens', id.value, 'slippage'] as const), queryFn: () => tokensApi.slippage(id.value), enabled, staleTime: 55_000 });
+}
 export function useCreator(id: Ref<number>) {
   return useQuery({ queryKey: computed(() => qk.creator(id.value)), queryFn: () => tokensApi.creator(id.value), staleTime: 30 * 60_000 });
 }

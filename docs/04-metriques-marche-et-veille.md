@@ -1,6 +1,6 @@
 # Panneau de métriques de marché et encadré de veille — schéma de données et moteur de diff
 
-> Document de cadrage. Version 0.3 — 2026-09-13. **Partie B (veille) implémentée** le 13 septembre 2026 avec les propositions par défaut de la partie D ; partie A (métriques de marché) à suivre.
+> Document de cadrage. Version 0.4 — 2026-09-14. **Parties A (métriques de marché) et B (veille) implémentées** avec les propositions par défaut de la partie D. Écart à noter : l'état de dérivée lit la monotonie sur 6 h → 1 h → 5 min (la fenêtre 24 h est affichée pour le contexte), conformément à l'exemple du cahier des charges.
 > S'appuie sur la base existante (`market_snapshots`, `holder_snapshots`, `alerts`, règles de divergence partagées).
 
 ## Journal des décisions

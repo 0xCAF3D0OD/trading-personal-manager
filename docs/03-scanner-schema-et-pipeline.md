@@ -1,6 +1,6 @@
 # Scanner de nouveaux tokens — schéma de données et pipeline de filtrage
 
-> Document de cadrage à valider **avant** le code. Version 0.1 — 2026-09-13.
+> Document de cadrage. Version 0.2 — 2026-09-14. **Implémenté** avec les six propositions par défaut du § 11 (aucun avis contraire reçu). Écarts : les exclusions d'étage 3 gardent la même rétention que les cas proches (7 jours) ; l'alerte zéro drapeau est rattachée à un token technique « SCANNER » archivé quand le token n'est pas encore surveillé.
 > Le scanner élimine, il ne promeut pas. Aucun classement par performance, aucun objectif de prix, aucun lien d'achat.
 
 ---
