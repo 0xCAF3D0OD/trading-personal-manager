@@ -26,6 +26,7 @@ export const AlertType = z.enum([
   'div_unconfirmed_rise',
   'div_announced_burn_no_supply_change',
   'scanner_clean_candidate',
+  'portfolio_daily_change',
 ]);
 export type AlertType = z.infer<typeof AlertType>;
 

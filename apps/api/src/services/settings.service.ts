@@ -1,4 +1,4 @@
-import { MARKET_DEFAULTS, MARKET_DEFAULTS_VERSION, MarketSettings, SCANNER_DEFAULTS, SCANNER_DEFAULTS_VERSION, ScannerSettings, UI_DEFAULTS, UI_DEFAULTS_VERSION, UiSettings, WATCH_DEFAULTS, WATCH_DEFAULTS_VERSION, WatchSettings, type SettingsEnvelope } from '@tpm/shared';
+import { MARKET_DEFAULTS, MARKET_DEFAULTS_VERSION, MarketSettings, PORTFOLIO_DEFAULTS, PORTFOLIO_DEFAULTS_VERSION, PortfolioSettings, SCANNER_DEFAULTS, SCANNER_DEFAULTS_VERSION, ScannerSettings, UI_DEFAULTS, UI_DEFAULTS_VERSION, UiSettings, WATCH_DEFAULTS, WATCH_DEFAULTS_VERSION, WatchSettings, type SettingsEnvelope } from '@tpm/shared';
 import type { ZodTypeAny } from 'zod';
 import { AppContext, NotFoundError, ValidationError } from './context.js';
 
@@ -11,6 +11,7 @@ export class SettingsService {
     market: { schema: MarketSettings, defaults: MARKET_DEFAULTS, version: MARKET_DEFAULTS_VERSION },
     scanner: { schema: ScannerSettings, defaults: SCANNER_DEFAULTS, version: SCANNER_DEFAULTS_VERSION },
     ui: { schema: UiSettings, defaults: UI_DEFAULTS, version: UI_DEFAULTS_VERSION },
+    portfolio: { schema: PortfolioSettings, defaults: PORTFOLIO_DEFAULTS, version: PORTFOLIO_DEFAULTS_VERSION },
   };
   private readonly cache = new Map<string, { id: number; value: unknown }>();
 

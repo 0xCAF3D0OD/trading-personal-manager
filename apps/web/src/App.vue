@@ -14,6 +14,7 @@ void ui.load();
     <router-link to="/" style="color:inherit"><strong>Surveillance Solana</strong> <span class="faint small">observe, historise, alerte — n’exécute rien</span></router-link>
     <nav>
       <router-link to="/">Liste</router-link>
+      <router-link to="/portfolio">Portefeuille</router-link>
       <router-link to="/scanner">Scanner</router-link>
       <router-link to="/alerts">Alertes</router-link>
       <router-link to="/settings">Réglages</router-link>

@@ -4,7 +4,7 @@ import type { Services } from '../services/index.js';
 import { runAlertEvaluation } from './evaluate-alerts.job.js';
 import { runHolderSnapshot } from './snapshot-holders.job.js';
 import { runMarketSnapshot } from './snapshot-market.job.js';
-import { runMarketSlippage, runScanDiscover, runScanEvaluate, runScanMaintenance, runScanRetro, runWatchMaintenance, runWatchNews, runWatchOnchain, runWatchPages, runWatchReview } from './watch.jobs.js';
+import { runMarketSlippage, runPortfolioDaily, runScanDiscover, runScanEvaluate, runScanMaintenance, runScanRetro, runWatchMaintenance, runWatchNews, runWatchOnchain, runWatchPages, runWatchReview } from './watch.jobs.js';
 import { JOB_SCHEDULES } from '../services/index.js';
 
 type JobFn = (s: Services) => Promise<string>;
@@ -56,6 +56,7 @@ export class Scheduler {
     schedule('scan-evaluate', wj['scan-evaluate']!, runScanEvaluate);
     schedule('scan-retro', wj['scan-retro']!, runScanRetro);
     schedule('scan-maintenance', wj['scan-maintenance']!, runScanMaintenance);
+    schedule('portfolio-daily', wj['portfolio-daily']!, runPortfolioDaily);
     // Entretien hebdomadaire du cache et des logs d'usage
     this.tasks.push(cron.schedule('0 4 * * 1', () => {
       this.s.ctx.cache.purgeExpired();

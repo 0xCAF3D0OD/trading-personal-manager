@@ -38,3 +38,4 @@ export async function runScanDiscover(s: Services): Promise<string> {
 export async function runScanEvaluate(s: Services): Promise<string> { return s.scanner.evaluate(); }
 export async function runScanRetro(s: Services): Promise<string> { return `${await s.scanner.retro()} horizon(s) rempli(s)`; }
 export async function runScanMaintenance(s: Services): Promise<string> { return s.scanner.maintenance(); }
+export async function runPortfolioDaily(s: Services): Promise<string> { return s.portfolio.daily(); }

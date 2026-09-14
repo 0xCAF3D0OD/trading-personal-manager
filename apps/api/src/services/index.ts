@@ -14,6 +14,7 @@ import { SettingsService } from './settings.service.js';
 import { SummaryService } from './summary.service.js';
 import { DossierService } from './dossier.service.js';
 import { ReportService } from './report.service.js';
+import { PortfolioService } from './portfolio.service.js';
 import { SlippageService } from './slippage.service.js';
 import { ScannerService } from './scanner.service.js';
 import { SupplyService } from './supply.service.js';
@@ -41,6 +42,7 @@ export interface Services {
   summary: SummaryService;
   dossier: DossierService;
   reports: ReportService;
+  portfolio: PortfolioService;
   slippage: SlippageService;
   scanner: ScannerService;
   watchPages: WatchPageService;
@@ -64,6 +66,7 @@ export const JOB_SCHEDULES = (env: Env): Record<string, string> => ({
   'scan-evaluate': '2-59/5 * * * *',
   'scan-retro': '15 * * * *',
   'scan-maintenance': '30 3 * * *',
+  'portfolio-daily': '55 23 * * *',
 });
 
 export function buildServices(env: Env, db: Db, log: Logger): Services {
@@ -90,6 +93,7 @@ export function buildServices(env: Env, db: Db, log: Logger): Services {
   return {
     ctx, tokens, market, divergences, alerts, settings, summary, dossier,
     reports: new ReportService(ctx, tokens, dossier),
+    portfolio: new PortfolioService(ctx, tokens, settings, alerts),
     slippage: new SlippageService(ctx, tokens, market, settings),
     scanner,
     health, supply, holders, plans, creator,

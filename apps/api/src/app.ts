@@ -12,6 +12,7 @@ import { settingsRoutes } from './routes/settings.routes.js';
 import { watchRoutes } from './routes/watch.routes.js';
 import { scannerRoutes } from './routes/scanner.routes.js';
 import { dossierRoutes } from './routes/dossier.routes.js';
+import { portfolioRoutes } from './routes/portfolio.routes.js';
 import { tokenDetailRoutes } from './routes/token-detail.routes.js';
 import { tokensRoutes } from './routes/tokens.routes.js';
 import { buildServices, type Services } from './services/index.js';
@@ -58,6 +59,7 @@ export async function buildApp(env: Env, db: Db, opts: { logger?: boolean | obje
     watchRoutes(api, services, expensive);
     scannerRoutes(api, services, expensive);
     dossierRoutes(api, services, expensive);
+    portfolioRoutes(api, services, expensive);
   }, { prefix: '/api' });
 
   app.addHook('onClose', async () => scheduler?.stop());
