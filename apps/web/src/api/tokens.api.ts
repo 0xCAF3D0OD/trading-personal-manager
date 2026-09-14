@@ -1,4 +1,4 @@
-import type { Divergence, HoldersView, MarketMetricsView, SlippageEstimate, SupplyView, Token, TokenHealth, TokenHistoryView, TokenSummary, WatchlistItem } from '@tpm/shared';
+import type { AiReport, CreateAiReportInput, Divergence, DossierView, HoldersView, MarketMetricsView, SlippageEstimate, SupplyView, Token, TokenHealth, TokenHistoryView, TokenSummary, WatchlistItem } from '@tpm/shared';
 import { http } from './http.js';
 
 export interface CreatorView {
@@ -24,4 +24,7 @@ export const tokensApi = {
   divergences: (id: number) => http.get<Divergence[]>(`/tokens/${id}/divergences`),
   history: (id: number, days: number) => http.get<TokenHistoryView>(`/tokens/${id}/history?days=${days}`),
   creator: (id: number) => http.get<CreatorView>(`/tokens/${id}/creator`),
+  dossier: (id: number) => http.get<DossierView>(`/tokens/${id}/dossier?format=json`),
+  reports: (id: number) => http.get<AiReport[]>(`/tokens/${id}/reports`),
+  createReport: (id: number, input: CreateAiReportInput) => http.post<AiReport>(`/tokens/${id}/reports`, input),
 };

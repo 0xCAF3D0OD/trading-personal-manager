@@ -67,6 +67,7 @@ async function refreshHealth() {
         </div>
         <div class="stack" style="align-items:flex-end">
           <div class="row">
+            <router-link :to="`/token/${t.id}/rapports`"><button title="Copier le dossier pour une IA, conserver ses rapports">Dossier IA</button></router-link>
             <router-link :to="`/token/${t.id}/veille`"><button>Veille</button></router-link>
             <router-link :to="`/token/${t.id}/journal`"><button class="primary">Journal de discipline</button></router-link>
           </div>

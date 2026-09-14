@@ -89,6 +89,35 @@ Il n'y a ni note ni total : les cinq réponses sont côte à côte, et c'est vou
 
 Le cadrage complet est dans [docs/04-metriques-marche-et-veille.md](docs/04-metriques-marche-et-veille.md).
 
+### L'accès pour l'IA (livré)
+
+Vous pouvez donner à une IA tout ce que la plateforme sait d'un token, sans payer une API en plus et sans qu'aucune clé ne circule.
+
+- **Le dossier.** Sur la fiche d'un token, le bouton « Dossier IA » ouvre une page où « Copier le dossier » met dans le presse-papiers un texte complet : identité, les cinq questions et leur finalité, santé, marché, offre, détenteurs, équipe et engagements, veille, divergences, glossaire. Chaque valeur porte sa source et sa date. La consigne de rédaction est en tête : l'IA doit décrire, hiérarchiser, signaler les contradictions et les manques, définir les termes, et n'a pas le droit de conseiller d'acheter ou de vendre, ni de donner une note ou une prévision. Votre plan du journal est exclu par défaut (réglages, Affichage).
+- **Le connecteur pour Claude Desktop.** L'application de bureau Claude sait se brancher sur des outils locaux. Le connecteur fourni lui donne quatre outils en lecture seule : la liste de surveillance avec les cinq réponses, le dossier d'un token, les alertes récentes, les résultats du scanner. C'est votre abonnement qui rédige le rapport ; rien ne quitte votre machine sauf ce que vous demandez à Claude de lire.
+- **Les rapports conservés.** Le rapport rendu par l'IA se colle sur la même page. Il est enregistré avec la date, le fournisseur et l'empreinte du dossier utilisé, et ne peut plus être modifié, comme un plan du journal.
+
+Pour brancher Claude Desktop :
+
+1. Construisez le connecteur une fois : `npm install` puis `npm run build -w apps/mcp`.
+2. Ouvrez les réglages de Claude Desktop, section Développeur, « Modifier la configuration », et ajoutez :
+
+```json
+{
+  "mcpServers": {
+    "trading-personal-manager": {
+      "command": "node",
+      "args": ["/chemin/absolu/vers/trading-personal-manager/apps/mcp/dist/index.js"],
+      "env": { "TPM_API_URL": "http://localhost:8080/api" }
+    }
+  }
+}
+```
+
+Avec Docker, l'adresse est `http://localhost:8080/api` ; en développement, `http://localhost:3000/api`. Redémarrez Claude Desktop, puis demandez-lui par exemple : « Lis le dossier d'EMBER et fais-moi un rapport ». Le connecteur ne sait qu'écrire du texte à partir de ce qu'il lit : il ne peut rien modifier dans la plateforme.
+
+**Filtrer la liste et le scanner.** Au-dessus de la liste de surveillance et des résultats du scanner, des filtres permettent de ne garder que les tokens récents (moins de 24 h, 7, 30 ou 90 jours) ou à forte évolution (variation sur 24 h au-dessus d'un seuil), et de trier par variation ou par âge. Ce sont des filtres de lecture : ils ne changent rien aux données ni aux alertes.
+
 ### Ce qui a été volontairement laissé de côté
 
 - Pas de bouton d'achat ou de vente, pas de connexion à votre plateforme d'échange : l'application observe, elle n'agit pas.
@@ -117,7 +146,7 @@ Les premiers signaux de divergence apparaissent après deux ou trois jours de re
 | **0.3.0 — Veille sur les annonces** | Livrée le 13 septembre 2026 | Panneau de métriques affiné (écart entre sources, état de dérivée, capitalisation source / recalculée / FDV, ratio liquidité / capitalisation avec slippage estimé, volume par source, trois divergences de plus, alerte retrait de liquidité) et encadré de veille (snapshots du site avec diff automatique, journal d'engagements en texte brut, frise « dire vs faire », actualités tierces séparées et signaux de promotion). Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md). |
 | **0.3.1 — Panneau de métriques de marché** | Livrée le 14 septembre 2026 | État de dérivée (extinction / accélération) sur les fenêtres 6 h, 1 h, 5 min ; écart entre sources avec alerte sur trois relevés ; capitalisation en trois lectures (source, recalculée, FDV) avec écart et détection de substitution ; offre émise nette des burns avec composants séparés ; ratio liquidité / capitalisation avec bandes, liste des pools, slippage estimé par cotation Jupiter ; volume avec source et bandes ; courbes groupées par source ; alerte de retrait de liquidité avec exclusion des migrations ; trois divergences de plus ; réglages versionnés. Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md), partie A. |
 | **0.4.1 — Lecture simple** | Livrée le 14 septembre 2026, avec les propositions par défaut du cadrage | Deux niveaux de lecture (simple par défaut, détail à la demande, globalement ou carte par carte) ; synthèse en cinq questions en tête de fiche, en phrases fixes, sans note ni total ; vocabulaire expliqué au survol ; cartes rangées dans l'ordre des questions ; liste de surveillance et scanner allégés ; colonne « Où l'acheter » dans le scanner (DEX par pool, plateformes centralisées via la fiche CoinGecko) ; réglages d'affichage versionnés. Cadrage : [docs/05](docs/05-lecture-simple-et-acces-ia.md), partie A. |
-| **0.4.2 — Accès pour l'IA** | Cadrée, à venir | Dossier à copier et connecteur pour Claude Desktop (abonnement, sans clé) ; appel API côté serveur en option. Cadrage : [docs/05](docs/05-lecture-simple-et-acces-ia.md), partie B. |
+| **0.4.2 — Accès pour l'IA** | Livrée le 14 septembre 2026 | Dossier complet d'un token en Markdown, daté et sourcé, avec la consigne de rédaction en tête (à copier dans n'importe quelle IA) ; connecteur MCP local pour l'application de bureau Claude (abonnement, sans clé, quatre outils en lecture seule) ; rapports collés conservés, figés, reliés à l'empreinte du dossier ; filtres « récent » et « forte évolution » sur la liste et le scanner. L'appel API côté serveur reste en option, non livré. Cadrage : [docs/05](docs/05-lecture-simple-et-acces-ia.md), partie B. |
 | **0.5.0 — Portefeuille** | Prévue | Valeur du portefeuille Kraken en lecture seule (permission de consultation des soldes uniquement), avec la source de chaque prix. Aucune route d'ordre. |
 | Non planifié | — | Web Push (ntfy couvre le besoin), indicateurs techniques (exclus par principe), multi-utilisateurs (hors périmètre). |
 
@@ -205,7 +234,7 @@ La réponse indique le palier détecté (A, B ou C) et, pour chaque donnée, la 
 npm test
 ```
 
-Quatre-vingt-huit tests : synthèse en cinq questions (gabarits, inconnu et partiel, bascules d'état), plateformes d'échange du scanner, base58 et adresse nulle, immuabilité des plans et des engagements, sept règles de divergence, moteur de diff (normalisation, appariement, lignes volatiles, robots.txt, JSON), pipeline de veille complet sur un site local, vérification automatique des engagements, réglages versionnés, métriques de marché (état de dérivée, écart de prix, capitalisation, bandes, slippage, retrait de liquidité et migrations, intégrité des courbes), pipeline du scanner avec jeux de données figés (normalisation, cinq étages, tri, paliers, rétrospective).
+Quatre-vingt-onze tests : dossier pour l'IA (consigne en tête, cinq questions et finalités, plan exclu par défaut, aucune clé, sections vides dites telles quelles), synthèse en cinq questions (gabarits, inconnu et partiel, bascules d'état), plateformes d'échange du scanner, base58 et adresse nulle, immuabilité des plans et des engagements, sept règles de divergence, moteur de diff (normalisation, appariement, lignes volatiles, robots.txt, JSON), pipeline de veille complet sur un site local, vérification automatique des engagements, réglages versionnés, métriques de marché (état de dérivée, écart de prix, capitalisation, bandes, slippage, retrait de liquidité et migrations, intégrité des courbes), pipeline du scanner avec jeux de données figés (normalisation, cinq étages, tri, paliers, rétrospective).
 
 ---
 
@@ -235,6 +264,7 @@ Quatre-vingt-huit tests : synthèse en cinq questions (gabarits, inconnu et part
 | `DEXSCREENER_BASE_URL`, `JUPITER_PRICE_URL`, `JUPITER_QUOTE_URL`, `RUGCHECK_BASE_URL` | URLs publiques | Surcharge pour test uniquement |
 | `GECKOTERMINAL_BASE_URL` | API publique | Voie principale du scanner, sans clé |
 | `COINGECKO_DEMO_API_KEY` | vide | Optionnel, voie de secours du scanner quand la voie publique est limitée. 10 000 crédits par mois. |
+| `TPM_API_URL` (connecteur MCP seulement) | `http://localhost:3000/api` | Adresse de l'API lue par le connecteur Claude Desktop ; `http://localhost:8080/api` avec Docker |
 | `CRON_MARKET_SNAPSHOT` | `*/15 * * * *` | Prix, volume, offre (sources gratuites) |
 | `CRON_HOLDER_SNAPSHOT` | `0 6 * * *` | Détenteurs et concentration, une fois par jour |
 | `CRON_ALERT_EVAL` | `* * * * *` | Évaluation des alertes |

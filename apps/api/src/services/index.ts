@@ -12,6 +12,8 @@ import { buildNotifierHub } from './notify/index.js';
 import { PlanService } from './plan.service.js';
 import { SettingsService } from './settings.service.js';
 import { SummaryService } from './summary.service.js';
+import { DossierService } from './dossier.service.js';
+import { ReportService } from './report.service.js';
 import { SlippageService } from './slippage.service.js';
 import { ScannerService } from './scanner.service.js';
 import { SupplyService } from './supply.service.js';
@@ -37,6 +39,8 @@ export interface Services {
   system: SystemService;
   settings: SettingsService;
   summary: SummaryService;
+  dossier: DossierService;
+  reports: ReportService;
   slippage: SlippageService;
   scanner: ScannerService;
   watchPages: WatchPageService;
@@ -71,21 +75,25 @@ export function buildServices(env: Env, db: Db, log: Logger): Services {
   const hub = buildNotifierHub(env);
   const alerts = new AlertService(ctx, tokens, market, divergences, hub, settings);
   ctx.sources.scannerRateCfg = () => settings.get<ScannerSettings>('scanner').rateLimit;
+  const summary = new SummaryService(ctx, tokens, settings, divergences);
+  const health = new HealthService(ctx, tokens);
+  const supply = new SupplyService(ctx, tokens);
+  const holders = new HoldersService(ctx, tokens, market);
+  const plans = new PlanService(ctx, tokens);
+  const creator = new CreatorService(ctx, tokens);
+  const watchPages = new WatchPageService(ctx, tokens, settings, alerts);
+  const claims = new ClaimsService(ctx, tokens, settings, alerts);
+  const news = new NewsService(ctx, tokens, settings);
+  const onchain = new OnchainWatchService(ctx, tokens, settings, alerts);
+  const dossier = new DossierService(ctx, { tokens, settings, summary, health, market, supply, holders, creator, watchPages, claims, news, onchain, divergences, plans });
   return {
-    ctx, tokens, market, divergences, alerts, settings,
-    summary: new SummaryService(ctx, tokens, settings, divergences),
+    ctx, tokens, market, divergences, alerts, settings, summary, dossier,
+    reports: new ReportService(ctx, tokens, dossier),
     slippage: new SlippageService(ctx, tokens, market, settings),
     scanner: new ScannerService(ctx, settings, alerts),
-    health: new HealthService(ctx, tokens),
-    supply: new SupplyService(ctx, tokens),
-    holders: new HoldersService(ctx, tokens, market),
-    plans: new PlanService(ctx, tokens),
-    creator: new CreatorService(ctx, tokens),
+    health, supply, holders, plans, creator,
     system: new SystemService(ctx, JOB_SCHEDULES(env)),
-    watchPages: new WatchPageService(ctx, tokens, settings, alerts),
-    claims: new ClaimsService(ctx, tokens, settings, alerts),
-    news: new NewsService(ctx, tokens, settings),
-    onchain: new OnchainWatchService(ctx, tokens, settings, alerts),
+    watchPages, claims, news, onchain,
     timeline: new TimelineService(ctx, tokens),
   };
 }

@@ -1,6 +1,6 @@
 # Lecture simple, synthèse en cinq questions et accès pour l'IA — cadrage
 
-> Document de cadrage. Version 0.2 — 2026-09-14. **Partie A implémentée** (0.4.1) avec les propositions par défaut de la partie D. Ajout demandé en cours de route : la colonne « Où l'acheter » du scanner (A.7). Partie B à venir (0.4.2).
+> Document de cadrage. Version 0.3 — 2026-09-14. **Parties A (0.4.1) et B (0.4.2) implémentées** avec les propositions par défaut de la partie D. Ajouts demandés en cours de route : colonne « Où l'acheter » du scanner (A.7), filtres « récent » et « forte évolution » sur la liste et le scanner (A.8). B.4 (appel API côté serveur) reste non livré, comme prévu.
 > Ne change aucun calcul ni aucune source : tout ce qui est décrit ici réorganise ce qui existe et ouvre une porte de sortie vers une IA. Les règles du projet restent entières : aucun score, aucune prédiction, aucun bouton d'achat, aucune clé dans le navigateur.
 
 ## Journal des décisions
@@ -86,6 +86,10 @@ Demandé le 14 septembre 2026. Une colonne « Où l'acheter » par ligne du scan
 | Plateformes centralisées (Kraken, Binance…) | Marchés de la fiche CoinGecko du token, identifiée par GeckoTerminal (`coingecko_coin_id`) | Certaine quand la fiche existe ; **jamais** de correspondance par symbole, car dix tokens portent le même |
 
 Quand le token n'a pas de fiche CoinGecko, la colonne le dit : « les plateformes centralisées ne peuvent pas être vérifiées ». Les marchés sont relus toutes les 24 h pour les tokens gardés seulement, hors file GeckoTerminal (autre hôte, autre limite), clé démo CoinGecko utilisée si présente. Table `scan_token_facts` : colonnes `coingecko_id`, `cex_venues`, `cex_checked_at` (migration 0006). Kraken est mis en évidence, puisque c'est la plateforme de Kevin.
+
+### A.8 Filtres de lecture : récent, forte évolution
+
+Demandé le 14 septembre 2026. Au-dessus de la liste de surveillance et des résultats du scanner, des filtres côté navigateur : âge maximal (24 h, 3 j, 7 j, 30 j, 90 j selon l'écran), variation sur 24 h minimale (10 à 500 % selon l'écran), liquidité minimale et « sans drapeau » pour le scanner, tri par variation ou par âge pour la liste. Ils ne modifient ni les données ni les alertes ; le tri manuel de la liste est désactivé tant qu'un filtre est actif. La variation 24 h de la liste, jusqu'ici absente, est lue dans le dernier relevé de marché.
 
 ### A.6 Réglages du module `ui` (défauts versionnés, `UI_DEFAULTS_VERSION = 1`)
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { UiSettings } from '@tpm/shared';
+import { AI_REPORT_PROMPT, AI_REPORT_PROMPT_VERSION } from '@tpm/shared';
 import { computed, ref, watch } from 'vue';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { ApiHttpError } from '@/api/http';
@@ -54,9 +55,10 @@ function resetAll() { if (window.confirm('Remettre les réglages d’affichage �
         </div>
       </section>
       <section class="card">
-        <h3>Dossier pour l’IA (partie B, à venir)</h3>
+        <h3>Dossier pour l’IA</h3>
         <label class="row" style="cursor:pointer;color:var(--text)"><input v-model="form.dossierIncludesPlan" type="checkbox" style="width:auto" /> Inclure mon plan du journal dans le dossier exporté</label>
         <div class="faint small">Exclu par défaut : le plan est personnel, le dossier peut être collé chez un tiers.</div>
+        <details style="margin-top:.5rem"><summary class="small muted">Consigne donnée à l’IA, en tête de chaque dossier (version {{ AI_REPORT_PROMPT_VERSION }}, versionnée dans le code)</summary><pre class="small" style="white-space:pre-wrap;margin:.5rem 0 0">{{ AI_REPORT_PROMPT }}</pre></details>
       </section>
       <div class="row"><input v-model="note" placeholder="Note de version (optionnelle)" style="flex:1" /><button class="primary" :disabled="save.isPending.value" @click="submit">Enregistrer</button></div>
     </template>
