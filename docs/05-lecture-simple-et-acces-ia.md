@@ -166,7 +166,11 @@ Le prompt système, versionné dans le code et affiché dans les réglages, impo
 
 Le même texte sert de consigne dans le dossier copié (B.2), en tête, pour que le résultat soit comparable quelle que soit l'IA.
 
-### B.6 Schéma
+### B.6 Export partageable
+
+Demandé le 14 septembre 2026. `GET /tokens/:id/reports/:rid/export?format=md|html` et `GET /tokens/:id/dossier/export?format=md|html`, servis en pièce jointe (`content-disposition`). Le HTML est une page autonome : styles intégrés, aucune ressource externe, feuille d'impression pour le PDF, en-tête (token, date, fournisseur, empreinte, version de la consigne) et pied rappelant l'absence de recommandation. Convertisseur Markdown minimal maison, sans dépendance, texte échappé. Les liens de téléchargement sont des ancres vers l'API, même origine, sans JavaScript.
+
+### B.7 Schéma
 
 ```sql
 CREATE TABLE ai_reports (

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AI_REPORT_PROMPT, GLOSSARY } from '@tpm/shared';
 import { buildDossier, type DossierInputs } from '../src/dossier/build.js';
+import { mdToHtml, safeFilename, toStandaloneHtml } from '../src/dossier/export.js';
 
 const now = 1_789_000_000;
 function inputs(over: Partial<DossierInputs> = {}): DossierInputs {
@@ -53,5 +54,30 @@ describe('Dossier pour l’IA', () => {
     expect(md).toContain('Aucun relevé des détenteurs.');
     expect(md).toContain('Créateur non identifiable.');
     expect(md).toContain('Rien d’enregistré.');
+  });
+});
+
+describe('Export partageable', () => {
+  it('convertit le Markdown du dossier en HTML en échappant tout le texte', () => {
+    const html = mdToHtml('# Titre\n\n> consigne\n\n## Section\n\n- point **fort** avec `code`\n- <script>alert(1)</script>\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\nParagraphe final.');
+    expect(html).toContain('<h1>Titre</h1>');
+    expect(html).toContain('<blockquote>consigne</blockquote>');
+    expect(html).toContain('<li>point <strong>fort</strong> avec <code>code</code></li>');
+    expect(html).toContain('&lt;script&gt;');
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>');
+    expect(html).toContain('<p>Paragraphe final.</p>');
+  });
+  it('produit une page autonome sans ressource externe, avec titre, date et pied', () => {
+    const page = toStandaloneHtml({ title: 'Rapport EMBER', subtitle: 'manuel · dossier abc', generatedAt: now, footer: 'aucune recommandation' }, buildDossier(inputs()));
+    expect(page.startsWith('<!doctype html>')).toBe(true);
+    expect(page).toContain('<title>Rapport EMBER</title>');
+    expect(page).toContain('aucune recommandation');
+    expect(page).not.toMatch(/<(script|link)\b/);
+    expect(page).not.toMatch(/src="http|href="http[^"]*\.(css|js)/);
+  });
+  it('fabrique des noms de fichiers sûrs', () => {
+    expect(safeFilename(['rapport', 'EMBER', '2026-09-14', 'manuel'], 'html')).toBe('rapport-ember-2026-09-14-manuel.html');
+    expect(safeFilename(['dossier', 'Éclair/Été', null], 'md')).toBe('dossier-eclair-ete.md');
   });
 });
