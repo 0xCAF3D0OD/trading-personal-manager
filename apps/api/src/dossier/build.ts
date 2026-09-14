@@ -51,9 +51,15 @@ export function buildDossier(i: DossierInputs): string {
     `- Créateur : ${t.creatorAddress ? `\`${t.creatorAddress}\`` : 'non identifiable dans les métadonnées'}`,
     `- Palier de sources actif : ${i.tier} (A : RPC public ; B : Helius ; C : Solscan)`, '');
 
-  L.push('## 2. Les cinq questions', '', 'Personne ne peut dire si ce token rapportera. Ces cinq questions disent ce qui peut faire perdre, et chacune est vérifiable.', '');
+  L.push('## 2. Les cinq questions', '', 'Personne ne peut dire si ce token rapportera. Ces cinq questions disent ce qui peut faire perdre, et chacune est vérifiable.', '',
+    'Les états (ok, warn, risk, partial, unknown) sont posés par l’outil, question par question, à partir de seuils réglables et affichés ; il n’existe pas de total et l’IA ne doit pas en produire. Chaque réponse porte la date de son relevé : elles ne forment pas un instantané.', '');
+  const stamps = i.summary.answers.map((a) => a.fetchedAt).filter((t): t is number => !!t);
+  if (stamps.length >= 2 && Math.max(...stamps) - Math.min(...stamps) > 3600) {
+    L.push(`Relevés pris entre ${date(Math.min(...stamps))} et ${date(Math.max(...stamps))} : ${Math.round((Math.max(...stamps) - Math.min(...stamps)) / 3600)} h d’écart entre la réponse la plus ancienne et la plus récente.`, '');
+  }
   i.summary.answers.forEach((a, k) => {
-    L.push(`### 2.${k + 1} ${a.question}`, '', `- À quoi ça sert : ${a.purpose}`, `- Réponse : **${a.answer}** ${src(S(a.source), a.fetchedAt)}`, `- État : ${a.state}${a.missing ? ` · variable manquante : ${a.missing}` : ''}`, '');
+    const ageH = a.fetchedAt ? Math.round((i.generatedAt - a.fetchedAt) / 3600) : null;
+    L.push(`### 2.${k + 1} ${a.question}`, '', `- À quoi ça sert : ${a.purpose}`, `- Réponse : **${a.answer}** ${src(S(a.source), a.fetchedAt)}${ageH !== null && ageH >= 1 ? ` · relevé vieux de ${ageH} h` : ''}`, `- État posé par l’outil : ${a.state}${a.missing ? ` · variable manquante : ${a.missing}` : ''}`, '');
   });
 
   L.push('## 3. Santé structurelle', '');
@@ -73,7 +79,7 @@ export function buildDossier(i: DossierInputs): string {
       `- Capitalisation source (${S(m.mcap.sourceName)}) : ${m.mcap.sourceIsFdv ? 'non fournie, FDV substituée' : usd(m.mcap.sourceValue)} · recalculée (prix × offre nette) : ${usd(m.mcap.local)} · FDV : ${usd(m.mcap.fdvLocal)}${m.mcap.gapPct !== null ? ` · écart source / recalculée ${pct(m.mcap.gapPct)}${m.mcap.gapWarn ? ' (anormal)' : ''}` : ''}`,
       `- Offre émise nette des burns : ${num(m.supply.net)} (mint ${num(m.supply.minted)}, adresses de burn ${num(m.supply.incinerated)}) ${src(S(m.supply.source), m.supply.fetchedAt)}`,
       `- Liquidité : pool principal ${usd(m.liquidity.mainPoolUsd)} (${pct(m.liquidity.ratioPct)} de la capitalisation, ${m.liquidity.bandLabel ?? 'bande inconnue'}) · ${m.liquidity.poolsCount} pool(s) connus pour ${usd(m.liquidity.totalUsd)} (${pct(m.liquidity.totalRatioPct)}, ${m.liquidity.totalBandLabel ?? 'bande inconnue'}) ${src(S(m.liquidity.source), m.fetchedAt)}`,
-      `- Volume 24 h : ${usd(m.volume.h24Usd)} ${src(S(m.volume.source))} · ratio volume / capitalisation ${m.volume.toMcap === null ? 'inconnu' : fr.format(m.volume.toMcap)}${m.volume.bandLabel ? ` (${m.volume.bandLabel})` : ''}`);
+      `- Volume 24 h, tous pools connus : ${usd(m.volume.h24Usd)} (pool principal ${usd(m.volume.mainPoolH24Usd)}) ${src(S(m.volume.source))} · ratio volume / capitalisation ${m.volume.toMcap === null ? 'inconnu' : fr.format(m.volume.toMcap)}${m.volume.bandLabel ? ` (${m.volume.bandLabel})` : ''}`);
     if (m.liquidity.pools.length) {
       L.push('', '| DEX | Type de pool | Liquidité | Volume 24 h |', '|---|---|---|---|');
       for (const p of m.liquidity.pools.slice(0, 10)) L.push(`| ${p.dexId}${p.isMain ? ' (principal)' : ''} | ${p.poolType} | ${usd(p.liquidityUsd)} | ${usd(p.volumeH24Usd)} |`);
@@ -127,8 +133,10 @@ export function buildDossier(i: DossierInputs): string {
 
   L.push('## 9. Divergences', '');
   const trig = i.divergences.filter((d) => d.status === 'triggered');
-  const ok = i.divergences.filter((d) => d.status === 'ok');
-  const ins = i.divergences.filter((d) => d.status === 'insufficient_data');
+  // Une règle « ok » dont les deux séries sont vides n'est pas au repos : elle n'est pas calculable.
+  const ok = i.divergences.filter((d) => d.status === 'ok' && (d.seriesA.changePct !== null || d.seriesB.changePct !== null));
+  const notComputable = i.divergences.filter((d) => d.status === 'ok' && d.seriesA.changePct === null && d.seriesB.changePct === null);
+  const ins = [...i.divergences.filter((d) => d.status === 'insufficient_data'), ...notComputable];
   for (const d of trig) L.push(`- **Déclenchée** · ${d.label} · ${d.explanation} (${d.seriesA.label} ${pct(d.seriesA.changePct)}, ${d.seriesB.label} ${pct(d.seriesB.changePct)}, fenêtre ${d.windowDays} j)`);
   for (const d of ok) L.push(`- Au repos · ${d.label} (${d.seriesA.label} ${pct(d.seriesA.changePct)}, ${d.seriesB.label} ${pct(d.seriesB.changePct)})`);
   if (ins.length) L.push(`- Historique insuffisant : ${ins.map((d) => d.label).join(' ; ')}`);

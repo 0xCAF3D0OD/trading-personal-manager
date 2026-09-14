@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MARKET_DEFAULTS } from '@tpm/shared';
-import { checkLiquidityWithdrawal, computeMomentum, constantProductImpactPct, groupBySource, liquidityBand, mcapGapPct, poolTypeOf, priceSpreadPct, sourceMcapIsFdv, volumeBand } from '../src/market/metrics.js';
+import { checkLiquidityWithdrawal, computeMomentum, constantProductImpactPct, effectiveLossPct, groupBySource, liquidityBand, mcapGapPct, poolTypeOf, priceSpreadPct, sourceMcapIsFdv, volumeBand } from '../src/market/metrics.js';
 import { insertToken, testServices } from './helpers.js';
 
 const s = MARKET_DEFAULTS;
@@ -135,5 +135,19 @@ describe('Nouvelles divergences', () => {
     expect(types).toContain('price_spread');
     expect(types).toContain('div_liquidity_withdrawal');
     expect(types.length).toBe(9);
+  });
+});
+
+describe('Perte effective et libellé de dérivée', () => {
+  it('lit la perte dans ce que la route rend, jamais négative', () => {
+    expect(effectiveLossPct(1000, 997.21)).toBeCloseTo(0.279, 3);
+    expect(effectiveLossPct(1000, 1002)).toBe(0);
+    expect(effectiveLossPct(1000, null)).toBeNull();
+  });
+  it('dit « baisse régulière » quand toutes les fenêtres baissent sans accélération', () => {
+    const s = MARKET_DEFAULTS;
+    // Toutes les fenêtres baissent, sans monotonie 6 h → 1 h → 5 min : ni extinction ni accélération, mais le sens est net.
+    expect(computeMomentum({ h24: -10, h6: -1, h1: -0.5, m5: -0.02 }, 500, s).label).toMatch(/^Baisse régulière/);
+    expect(computeMomentum({ h24: 0.3, h6: -0.2, h1: 0.1, m5: 0 }, 500, s).label).toMatch(/^Sans tendance nette/);
   });
 });

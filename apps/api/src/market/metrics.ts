@@ -26,7 +26,12 @@ export function computeMomentum(pct: PctWindows, volume5mUsd: number | null, s: 
   const increasing = vals.every((v, i) => i === 0 || v >= (vals[i - 1] as number) + t);
   if (decreasing && (hourlyRates.m5 as number) < 0 && (hourlyRates.h1 as number) < 0) return { state: 'extinction', hourlyRates, label: `Mouvement en extinction : ${detail}` };
   if (increasing && (hourlyRates.m5 as number) > 0 && (hourlyRates.h1 as number) > 0) return { state: 'acceleration', hourlyRates, label: `Accélération en cours : ${detail}` };
-  return { state: 'none', hourlyRates, label: `Sans tendance nette : ${detail}` };
+  // Pas d'accélération monotone, mais le sens peut être net : le dire, sinon un débutant lit « sans tendance » pour « stable ».
+  const rates = [hourlyRates.h24, hourlyRates.h6, hourlyRates.h1, hourlyRates.m5].filter((v): v is number => v !== null);
+  const allDown = rates.length >= 3 && rates.every((v) => v < 0);
+  const allUp = rates.length >= 3 && rates.every((v) => v > 0);
+  const head = allDown ? 'Baisse régulière, sans accélération' : allUp ? 'Hausse régulière, sans accélération' : 'Sans tendance nette';
+  return { state: 'none', hourlyRates, label: `${head} : ${detail}` };
 }
 
 export function priceSpreadPct(primary: number | null, secondary: number | null): number | null {
@@ -66,6 +71,12 @@ export function poolTypeOf(dexId: string, s: MarketSettings): PoolType {
 }
 
 /** Impact d'une vente de X $ dans un pool à produit constant de réserve R $ (moitié de chaque côté) : X / (R/2 + X). */
+/** Perte effective d'une vente : ce que l'ordre vaut au prix de référence moins ce que la route rend, frais inclus. Jamais négative. */
+export function effectiveLossPct(orderUsd: number, receivedUsd: number | null): number | null {
+  if (receivedUsd === null || !(orderUsd > 0) || !Number.isFinite(receivedUsd)) return null;
+  return Math.max(0, ((orderUsd - receivedUsd) / orderUsd) * 100);
+}
+
 export function constantProductImpactPct(orderUsd: number, reserveUsd: number): number | null {
   if (!(reserveUsd > 0) || !(orderUsd > 0)) return null;
   return (orderUsd / (reserveUsd / 2 + orderUsd)) * 100;

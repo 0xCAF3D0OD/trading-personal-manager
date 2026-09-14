@@ -1,6 +1,6 @@
 import type { MarketSettings, SlippageEstimate } from '@tpm/shared';
 import { nowS } from '../db/client.js';
-import { constantProductImpactPct, poolTypeOf } from '../market/metrics.js';
+import { constantProductImpactPct, effectiveLossPct, poolTypeOf } from '../market/metrics.js';
 import { AppContext } from './context.js';
 import type { MarketService } from './market.service.js';
 import type { SettingsService } from './settings.service.js';
@@ -36,7 +36,7 @@ export class SlippageService {
   }
 
   private async one(mint: string, decimals: number, orderUsd: number, price: number | null, reserveUsd: number | null, dexId: string | null, cfg: MarketSettings): Promise<SlippageEstimate> {
-    if (price === null || price <= 0) return { orderUsd, impactPct: null, method: 'unavailable', route: [], note: 'Prix indisponible : impossible de convertir la taille d’ordre en tokens.', fetchedAt: nowS() };
+    if (price === null || price <= 0) return { orderUsd, impactPct: null, receivedUsd: null, quotedImpactPct: null, method: 'unavailable', route: [], note: 'Prix indisponible : impossible de convertir la taille d’ordre en tokens.', fetchedAt: nowS() };
     const tokens = orderUsd / price;
     const amountRaw = BigInt(Math.floor(tokens * 10 ** decimals));
     try {
@@ -44,18 +44,29 @@ export class SlippageService {
         value: await this.ctx.sources.jupiterQuote.sellQuote(mint, amountRaw), source: 'jupiter',
       }), { staleOnError: false });
       const q = hit.value;
+      // L'« impact » annoncé par Jupiter est souvent 0 ou grossier : la perte effective se lit dans ce que la route rend.
+      const loss = effectiveLossPct(orderUsd, q.outAmountUsd);
+      if (loss !== null) {
+        const poolType0 = dexId ? poolTypeOf(dexId, cfg) : 'unknown';
+        const cp = poolType0 === 'constant_product' && reserveUsd !== null ? constantProductImpactPct(orderUsd, reserveUsd) : null;
+        const suspicious = cp !== null && loss > 5 && loss > cp * 5;
+        const note = suspicious
+          ? `${JUPITER_NOTE} Attention : la route Jupiter rend bien moins que ne le laisse attendre le pool principal (${dexId}, ≈ ${cp.toFixed(2)} % attendus) : routage défaillant, pool non indexé ou prix de référence périmé. À recouper avant de conclure.`
+          : JUPITER_NOTE;
+        return { orderUsd, impactPct: loss, receivedUsd: q.outAmountUsd, quotedImpactPct: q.priceImpactPct, method: 'jupiter_quote', route: q.route, note, fetchedAt: hit.fetchedAt };
+      }
       if (q.priceImpactPct !== null) {
-        return { orderUsd, impactPct: q.priceImpactPct, method: 'jupiter_quote', route: q.route, note: JUPITER_NOTE, fetchedAt: hit.fetchedAt };
+        return { orderUsd, impactPct: q.priceImpactPct, receivedUsd: null, quotedImpactPct: q.priceImpactPct, method: 'jupiter_quote', route: q.route, note: JUPITER_NOTE, fetchedAt: hit.fetchedAt };
       }
     } catch (err) {
       this.ctx.log.warn({ err: (err as Error).message, mint, orderUsd }, 'Cotation Jupiter indisponible');
     }
     const poolType = dexId ? poolTypeOf(dexId, cfg) : 'unknown';
     if (poolType === 'constant_product' && reserveUsd !== null) {
-      return { orderUsd, impactPct: constantProductImpactPct(orderUsd, reserveUsd), method: 'constant_product', route: [dexId as string], note: `Approximation, formule x·y = k sur le pool principal (${dexId}), hors frais. Jupiter n’a pas répondu.`, fetchedAt: nowS() };
+      return { orderUsd, impactPct: constantProductImpactPct(orderUsd, reserveUsd), receivedUsd: null, quotedImpactPct: null, method: 'constant_product', route: [dexId as string], note: `Approximation, formule x·y = k sur le pool principal (${dexId}), hors frais. Jupiter n’a pas répondu.`, fetchedAt: nowS() };
     }
     return {
-      orderUsd, impactPct: null, method: 'unavailable', route: [],
+      orderUsd, impactPct: null, receivedUsd: null, quotedImpactPct: null, method: 'unavailable', route: [],
       note: poolType === 'concentrated'
         ? `Jupiter n’a pas répondu et le pool principal (${dexId}) est à liquidité concentrée : la formule produit constant y serait fausse, pas approximative.`
         : 'Jupiter n’a pas répondu et le type du pool principal est inconnu : aucune estimation honnête possible.',

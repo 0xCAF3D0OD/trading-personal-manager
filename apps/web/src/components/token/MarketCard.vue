@@ -15,14 +15,15 @@ const { open, detailMode, toggle } = useCardDetail();
 const ui = useUiStore();
 const MOM: Record<string, { s: string; l: string }> = {
   extinction: { s: 'warning', l: 'Mouvement en extinction' }, acceleration: { s: 'ok', l: 'Accélération en cours' },
-  none: { s: 'neutral', l: 'Sans tendance nette' }, unknown: { s: 'unknown', l: 'Dérivée non calculable' }, insufficient: { s: 'unknown', l: 'Dérivée non calculable' },
+  none: { s: 'neutral', l: 'Sans accélération' }, unknown: { s: 'unknown', l: 'Dérivée non calculable' }, insufficient: { s: 'unknown', l: 'Dérivée non calculable' },
 };
 /** Une phrase pour la tendance, en mots courants. */
 const trend = computed(() => {
   const m = props.market.momentum.state;
   const h24 = props.market.priceChange.h24;
   const dir = h24 === null ? 'variation 24 h inconnue' : h24 >= 0 ? `en hausse de ${fmtPct(h24, { signed: false })} sur 24 h` : `en baisse de ${fmtPct(Math.abs(h24), { signed: false })} sur 24 h`;
-  const tail = m === 'extinction' ? ', et le mouvement ralentit depuis 1 h' : m === 'acceleration' ? ', et le mouvement accélère depuis 1 h' : '';
+  const lbl = props.market.momentum.label;
+  const tail = m === 'extinction' ? ', et le mouvement ralentit depuis 1 h' : m === 'acceleration' ? ', et le mouvement accélère depuis 1 h' : lbl.startsWith('Baisse régulière') ? ', en baisse régulière sur toutes les fenêtres' : lbl.startsWith('Hausse régulière') ? ', en hausse régulière sur toutes les fenêtres' : '';
   return `Prix ${dir}${tail}.`;
 });
 const showChart = computed(() => (open.value || ui.settings.showPriceChartInSimple) && props.priceHistory.some((g) => g.points.length > 1));
@@ -86,7 +87,7 @@ const showChart = computed(() => (open.value || ui.settings.showPriceChartInSimp
 
       <h3 style="margin-top:1rem"><Terme mot="volume">Volume</Terme></h3>
       <dl class="kv">
-        <dt>Volume 24 h <SourceTag :source="market.volume.source" /></dt><dd>{{ fmtUsd(market.volume.h24Usd, { compact: true }) }}</dd>
+        <dt>Volume 24 h, tous pools connus <SourceTag :source="market.volume.source" /></dt><dd>{{ fmtUsd(market.volume.h24Usd, { compact: true }) }} <span v-if="market.volume.mainPoolH24Usd !== null && market.liquidity.poolsCount > 1" class="faint small">(pool principal {{ fmtUsd(market.volume.mainPoolH24Usd, { compact: true }) }})</span></dd>
         <dt>Ratio volume / capitalisation recalculée</dt>
         <dd>{{ market.volume.toMcap === null ? '—' : market.volume.toMcap.toFixed(3) }} <span v-if="market.volume.bandLabel" class="badge" :class="market.volume.band === 'extreme' ? 'risk' : market.volume.band === 'low' ? 'warning' : 'neutral'">{{ market.volume.bandLabel }}</span></dd>
         <dt>Variation du ratio 24 h / 7 j (même source)</dt><dd><span :class="pctClass(market.volume.ratioChange24hPct)">{{ fmtPct(market.volume.ratioChange24hPct) }}</span> · <span :class="pctClass(market.volume.ratioChange7dPct)">{{ fmtPct(market.volume.ratioChange7dPct) }}</span></dd>
