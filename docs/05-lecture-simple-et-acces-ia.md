@@ -89,7 +89,7 @@ Quand le token n'a pas de fiche CoinGecko, la colonne le dit : « les plateforme
 
 ### A.8 Filtres de lecture : récent, forte évolution
 
-Demandé le 14 septembre 2026. Au-dessus de la liste de surveillance et des résultats du scanner, des filtres côté navigateur : âge maximal (24 h, 3 j, 7 j, 30 j, 90 j selon l'écran), variation sur 24 h minimale (10 à 500 % selon l'écran), liquidité minimale et « sans drapeau » pour le scanner, tri par variation ou par âge pour la liste. Ils ne modifient ni les données ni les alertes ; le tri manuel de la liste est désactivé tant qu'un filtre est actif. La variation 24 h de la liste, jusqu'ici absente, est lue dans le dernier relevé de marché.
+Demandé le 14 septembre 2026. Au-dessus de la liste de surveillance et des résultats du scanner, des filtres côté navigateur : âge maximal (24 h, 3 j, 7 j, 30 j, 90 j selon l'écran), variation sur 24 h minimale (10 à 500 % selon l'écran), liquidité minimale et « sans drapeau » pour le scanner (les exclus ont les mêmes filtres, plus l'étage et le motif d'exclusion), tri par variation ou par âge pour la liste. Ils ne modifient ni les données ni les alertes ; le tri manuel de la liste est désactivé tant qu'un filtre est actif. La variation 24 h de la liste, jusqu'ici absente, est lue dans le dernier relevé de marché.
 
 ### A.6 Réglages du module `ui` (défauts versionnés, `UI_DEFAULTS_VERSION = 1`)
 
