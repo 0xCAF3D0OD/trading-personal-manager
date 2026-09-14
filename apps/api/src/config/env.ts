@@ -29,6 +29,11 @@ const EnvSchema = z.object({
   GECKOTERMINAL_BASE_URL: z.string().url().default('https://api.geckoterminal.com/api/v2'),
   COINGECKO_ONCHAIN_BASE_URL: z.string().url().default('https://api.coingecko.com/api/v3/onchain'),
   COINGECKO_DEMO_API_KEY: optionalString,
+
+  // Portefeuille Kraken (docs/06) : clé « Query Funds » seule, lecture seule par construction.
+  KRAKEN_API_KEY: optionalString,
+  KRAKEN_API_SECRET: optionalString,
+  KRAKEN_BASE_URL: z.string().url().default('https://api.kraken.com'),
   DEXSCREENER_BASE_URL: z.string().url().default('https://api.dexscreener.com'),
   JUPITER_PRICE_URL: z.string().url().default('https://lite-api.jup.ag/price/v3'),
   JUPITER_QUOTE_URL: z.string().url().default('https://lite-api.jup.ag/swap/v1'),
@@ -78,7 +83,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
       heliusApiKey = undefined;
     }
   }
-  for (const k of ['SOLSCAN_API_KEY', 'HELIUS_API_KEY', 'TELEGRAM_BOT_TOKEN', 'NTFY_TOKEN', 'CRYPTOPANIC_API_KEY', 'GITHUB_TOKEN', 'X_BEARER_TOKEN', 'COINGECKO_DEMO_API_KEY']) {
+  for (const k of ['SOLSCAN_API_KEY', 'HELIUS_API_KEY', 'TELEGRAM_BOT_TOKEN', 'NTFY_TOKEN', 'CRYPTOPANIC_API_KEY', 'GITHUB_TOKEN', 'X_BEARER_TOKEN', 'COINGECKO_DEMO_API_KEY', 'KRAKEN_API_KEY', 'KRAKEN_API_SECRET']) {
     if (source[`VITE_${k}`]) {
       throw new Error(`VITE_${k} est défini : les variables VITE_* sont publiques, déplacez ce secret.`);
     }
