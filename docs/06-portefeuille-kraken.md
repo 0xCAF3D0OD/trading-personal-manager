@@ -8,7 +8,8 @@
 | Date | Point | Verdict | Effet |
 |---|---|---|---|
 | 2026-09-13 | Module Kraken reporté après l'observation on-chain | **Validé** | Version 0.5.0 |
-| 2026-09-14 | Cadrage ci-dessous | **À valider** | Partie F |
+| 2026-09-14 | Cadrage ci-dessous | **Validé avec les propositions par défaut** (partie H) | Tout le document |
+| 2026-09-14 | Source Kraken | **Livrée** : signature vérifiée contre l'exemple de la documentation, liste blanche `Balance` seule testée, normalisation des codes et des états, paires et prix publics | B, C.1, C.2 |
 
 ---
 

@@ -52,5 +52,5 @@ export function pctClass(v: number | null | undefined): string {
 
 export const SOURCE_LABEL: Record<string, string> = {
   rpc: 'RPC Solana', helius: 'Helius', dexscreener: 'DexScreener', jupiter: 'Jupiter', rugcheck: 'RugCheck',
-  solscan: 'Solscan', local: 'Base locale', unavailable: 'Indisponible',
+  solscan: 'Solscan', geckoterminal: 'GeckoTerminal', coingecko: 'CoinGecko', kraken: 'Kraken', local: 'Base locale', unavailable: 'Indisponible',
 };

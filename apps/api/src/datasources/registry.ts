@@ -6,6 +6,7 @@ import { GeckoTerminalSource } from './geckoterminal/geckoterminal.source.js';
 import type { ScannerSettings } from '@tpm/shared';
 import { SourceHealth } from './health.js';
 import { HeliusSource } from './helius/helius.source.js';
+import { KrakenSource } from './kraken/kraken.source.js';
 import type { HttpDeps } from './http.js';
 import { JupiterPriceSource } from './jupiter/jupiter-price.source.js';
 import { JupiterQuoteSource } from './jupiter/jupiter-quote.source.js';
@@ -30,6 +31,7 @@ export class DataSourceRegistry {
   scannerRateCfg: () => ScannerSettings['rateLimit'] = () => ({ callsPerMinute: 8, maxBackoffMs: 120_000, breakerAfterConsecutive429: 3, breakerPauseS: 300 });
   readonly rugcheck: RugCheckSource;
   readonly helius: HeliusSource | null;
+  readonly kraken: KrakenSource | null;
   readonly solscan: SolscanSource | null;
   readonly tier: Tier;
 
@@ -41,6 +43,7 @@ export class DataSourceRegistry {
     this.jupiterQuote = new JupiterQuoteSource(deps, env.JUPITER_QUOTE_URL);
     this.geckoterminal = new GeckoTerminalSource(deps, env.GECKOTERMINAL_BASE_URL, env.COINGECKO_ONCHAIN_BASE_URL, env.COINGECKO_DEMO_API_KEY, () => this.scannerRateCfg());
     this.rugcheck = new RugCheckSource(deps, env.RUGCHECK_BASE_URL);
+    this.kraken = env.KRAKEN_API_KEY && env.KRAKEN_API_SECRET ? new KrakenSource(deps, env.KRAKEN_BASE_URL, env.KRAKEN_API_KEY, env.KRAKEN_API_SECRET) : null;
     this.helius = env.isHelius ? new HeliusSource(deps, env.SOLANA_RPC_URL, env.heliusApiKey, env.HELIUS_MAX_HOLDER_PAGES) : null;
     this.solscan = env.SOLSCAN_API_KEY
       ? new SolscanSource(new SolscanClient(deps, env.SOLSCAN_BASE_URL, env.SOLSCAN_API_KEY))
@@ -55,6 +58,7 @@ export class DataSourceRegistry {
     this.health.configure('coingecko', !!env.COINGECKO_DEMO_API_KEY);
     this.health.configure('helius', !!this.helius);
     this.health.configure('solscan', !!this.solscan);
+    this.health.configure('kraken', !!this.kraken);
   }
 
   get canFullHolders(): boolean {
@@ -77,6 +81,7 @@ export class DataSourceRegistry {
     const cap = (key: string, label: string, activeSource: SourceName, available: boolean, missingVariable: string | null): DataCapability =>
       ({ key, label, activeSource, available, missingVariable });
     return [
+      cap('portfolio', 'Portefeuille Kraken (soldes, lecture seule)', this.kraken ? 'kraken' : 'unavailable', !!this.kraken, this.kraken ? null : 'KRAKEN_API_KEY et KRAKEN_API_SECRET (permission « Query Funds » seule)'),
       cap('health', 'Santé structurelle (mint, freeze, Token-2022)', 'rpc', true, null),
       cap('supply', 'Offre et burn', 'rpc', true, null),
       cap('price', 'Prix, volume, liquidité', 'dexscreener', true, null),
