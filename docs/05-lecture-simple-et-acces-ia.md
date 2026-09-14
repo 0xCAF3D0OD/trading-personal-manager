@@ -1,6 +1,6 @@
 # Lecture simple, synthèse en cinq questions et accès pour l'IA — cadrage
 
-> Document de cadrage à valider **avant** le code. Version 0.1 — 2026-09-14.
+> Document de cadrage. Version 0.2 — 2026-09-14. **Partie A implémentée** (0.4.1) avec les propositions par défaut de la partie D. Ajout demandé en cours de route : la colonne « Où l'acheter » du scanner (A.7). Partie B à venir (0.4.2).
 > Ne change aucun calcul ni aucune source : tout ce qui est décrit ici réorganise ce qui existe et ouvre une porte de sortie vers une IA. Les règles du projet restent entières : aucun score, aucune prédiction, aucun bouton d'achat, aucune clé dans le navigateur.
 
 ## Journal des décisions
@@ -73,6 +73,17 @@ Termes couverts au minimum : autorité de mint, autorité de freeze, frais de tr
 - **Liste de surveillance** en lecture simple : symbole, prix, variation 24 h, et les cinq réponses sous forme de mots courts (« sain / mince / concentré / calme / 2 contradictions ») pour comparer d'un regard. En détail, les colonnes actuelles.
 - **Scanner** en lecture simple : symbole, âge, +24 h, liquidité, nombre de drapeaux, bouton Ajouter. Le reste sous le dépliage de ligne, comme aujourd'hui. La rétrospective ne montre que la médiane à J+7 avec les deux modes ; le détail garde les histogrammes et l'analyse par drapeau.
 - **Veille** : inchangée dans sa structure, mais les diffs ligne à ligne passent sous un dépliage, et l'onglet par défaut devient la chronologie.
+
+### A.7 Où s'achète le token (scanner)
+
+Demandé le 14 septembre 2026. Une colonne « Où l'acheter » par ligne du scanner, en lecture simple comme en détail. Ce n'est pas un bouton d'achat : c'est un lien vers un endroit où le token s'échange.
+
+| Plateformes | Source | Fiabilité |
+|---|---|---|
+| DEX (Raydium, Orca, Meteora, Pump.fun…) | Les pools déjà connus du scanner (GeckoTerminal), par adresse | Certaine : un pool est une adresse, pas un nom |
+| Plateformes centralisées (Kraken, Binance…) | Marchés de la fiche CoinGecko du token, identifiée par GeckoTerminal (`coingecko_coin_id`) | Certaine quand la fiche existe ; **jamais** de correspondance par symbole, car dix tokens portent le même |
+
+Quand le token n'a pas de fiche CoinGecko, la colonne le dit : « les plateformes centralisées ne peuvent pas être vérifiées ». Les marchés sont relus toutes les 24 h pour les tokens gardés seulement, hors file GeckoTerminal (autre hôte, autre limite), clé démo CoinGecko utilisée si présente. Table `scan_token_facts` : colonnes `coingecko_id`, `cex_venues`, `cex_checked_at` (migration 0006). Kraken est mis en évidence, puisque c'est la plateforme de Kevin.
 
 ### A.6 Réglages du module `ui` (défauts versionnés, `UI_DEFAULTS_VERSION = 1`)
 
@@ -190,3 +201,5 @@ Réglages `ui` : voir A.6. Aucune autre table.
 | 6 | Courbe conservée en lecture simple | Le prix sur 30 jours, rien d'autre |
 | 7 | Rapport collé à la main historisé (`ai_reports`, fournisseur « manuel ») | Oui |
 | 8 | Numéro de version | 0.4.1 pour la partie A, 0.4.2 pour la partie B, Kraken reste 0.5.0 |
+
+Le 14 septembre 2026, Kevin a accepté les huit propositions par défaut et demandé de commencer par la partie A, en y ajoutant A.7.

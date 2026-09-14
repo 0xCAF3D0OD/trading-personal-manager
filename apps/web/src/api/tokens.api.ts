@@ -1,4 +1,4 @@
-import type { Divergence, HoldersView, MarketMetricsView, SlippageEstimate, SupplyView, Token, TokenHealth, TokenHistoryView, WatchlistItem } from '@tpm/shared';
+import type { Divergence, HoldersView, MarketMetricsView, SlippageEstimate, SupplyView, Token, TokenHealth, TokenHistoryView, TokenSummary, WatchlistItem } from '@tpm/shared';
 import { http } from './http.js';
 
 export interface CreatorView {
@@ -8,6 +8,8 @@ export interface CreatorView {
 
 export const tokensApi = {
   list: () => http.get<WatchlistItem[]>('/tokens'),
+  summaries: () => http.get<Record<number, TokenSummary>>('/tokens/summaries'),
+  summary: (id: number) => http.get<TokenSummary>(`/tokens/${id}/summary`),
   add: (address: string) => http.post<Token>('/tokens', { address }),
   remove: (id: number) => http.delete<void>(`/tokens/${id}`),
   reorder: (ids: number[]) => http.patch<WatchlistItem[]>('/tokens/order', { ids }),

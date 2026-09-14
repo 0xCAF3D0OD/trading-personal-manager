@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import type { ScanRetroView } from '@tpm/shared';
 import { fmtDate, fmtPct, fmtUsd, shortAddr } from '@/composables/useFormat';
-defineProps<{ retro: ScanRetroView }>();
+defineProps<{ retro: ScanRetroView; detail: boolean }>();
 const H: Record<string, string> = { d1: 'J+1', d7: 'J+7', d30: 'J+30' };
 </script>
 <template>
   <div class="stack" style="gap:1rem">
     <p class="small muted">La seule question qui compte : si j'avais acheté chaque token remonté, où en serais-je ? La médiane d'abord, la moyenne ensuite, parce qu'un seul x50 masque cinquante pertes à −90 %. Deux calculs : tokens disparus comptés à −100 %, ou exclus.</p>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
-      <section v-for="s in retro.stats" :key="s.horizon" class="card">
+      <section v-for="s in retro.stats.filter((x) => detail || x.horizon === 'd7')" :key="s.horizon" class="card">
         <div class="card-head"><h2>{{ H[s.horizon] }}</h2><span class="faint small">{{ s.count }} token(s) échus, {{ s.unavailable }} disparu(s)</span></div>
         <div v-if="!s.count" class="empty">Aucun horizon échu.</div>
         <template v-else>
@@ -23,11 +23,11 @@ const H: Record<string, string> = { d1: 'J+1', d7: 'J+7', d30: 'J+30' };
             <dt>Meilleur · pire</dt><dd>{{ fmtPct(s.withLoss.best, { digits: 0 }) }} · {{ fmtPct(s.withLoss.worst, { digits: 0 }) }}</dd>
             <dt>100 $ sur chacun</dt><dd>{{ fmtUsd(s.withLoss.value100Each) }} sur {{ fmtUsd(s.count * 100) }} misés</dd>
           </dl>
-          <table class="small" style="margin-top:.5rem"><tbody><tr v-for="b in s.histogram" :key="b.label"><td>{{ b.label }}</td><td class="num">{{ b.count }}</td></tr></tbody></table>
+          <table v-if="detail" class="small" style="margin-top:.5rem"><tbody><tr v-for="b in s.histogram" :key="b.label"><td>{{ b.label }}</td><td class="num">{{ b.count }}</td></tr></tbody></table>
         </template>
       </section>
     </div>
-    <section class="card">
+    <section v-if="detail" class="card">
       <h2>Par nombre de drapeaux au moment du relevé</h2>
       <p class="small muted">Si les tokens à zéro drapeau ne font pas mieux que les autres, les drapeaux ne discriminent pas.</p>
       <table><thead><tr><th>Drapeaux</th><th v-for="h in ['d1','d7','d30']" :key="h" class="num">{{ H[h] }} (médiane, n)</th></tr></thead>
@@ -36,7 +36,7 @@ const H: Record<string, string> = { d1: 'J+1', d7: 'J+7', d30: 'J+30' };
             <template v-for="c in retro.byFlagCount.filter((x) => x.flagCount === fc && x.horizon === h)" :key="c.horizon">{{ c.count ? `${fmtPct(c.medianPct, { digits: 0 })} (${c.count})` : '—' }}</template>
           </td></tr></tbody></table>
     </section>
-    <section v-if="retro.byFlag.length" class="card">
+    <section v-if="detail && retro.byFlag.length" class="card">
       <h2>Pouvoir d'élimination de chaque drapeau</h2>
       <table><thead><tr><th>Drapeau</th><th>Horizon</th><th class="num">Avec (médiane, n)</th><th class="num">Sans (médiane, n)</th></tr></thead>
         <tbody><tr v-for="b in retro.byFlag.filter((x) => x.withCount + x.withoutCount > 0)" :key="`${b.flag}-${b.horizon}`">

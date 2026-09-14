@@ -107,7 +107,8 @@ function team(i: SummaryInputs): SummaryAnswer {
 function market(i: SummaryInputs): SummaryAnswer {
   const base = { id: 'market' as const, question: 'Le marché confirme-t-il l’histoire ?', card: 'divergences', missing: null, source: 'local' as SourceName };
   const d = i.divergences;
-  if (d.evaluated === 0 || d.insufficient === d.evaluated) {
+  // Une règle vide de sens sur un token neuf (burn annoncé sans engagement) peut être « ok » à elle seule : on exige au moins deux règles réellement évaluées.
+  if (d.evaluated === 0 || d.evaluated - d.insufficient <= 1) {
     return { ...base, state: 'unknown', fetchedAt: d.computedAt, short: 'trop tôt', answer: 'Trop tôt : les divergences demandent plusieurs jours de relevés quotidiens.' };
   }
   if (!d.triggered.length) {

@@ -19,7 +19,9 @@ export function fmtNum(v: number | null | undefined, opts: { compact?: boolean; 
 
 export function fmtPct(v: number | null | undefined, opts: { signed?: boolean; digits?: number } = { signed: true }): string {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  const s = v.toFixed(opts.digits ?? 2);
+  // Même convention que les phrases du serveur : virgule décimale.
+  const d = opts.digits ?? 2;
+  const s = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
   return `${opts.signed && v > 0 ? '+' : ''}${s} %`;
 }
 

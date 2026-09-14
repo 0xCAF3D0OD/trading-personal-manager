@@ -6,6 +6,9 @@ import { qk } from './keys';
 export function useToken(id: Ref<number>) {
   return useQuery({ queryKey: computed(() => qk.token(id.value)), queryFn: () => tokensApi.get(id.value), staleTime: 55_000, refetchInterval: 60_000 });
 }
+export function useSummary(id: Ref<number>) {
+  return useQuery({ queryKey: computed(() => qk.summary(id.value)), queryFn: () => tokensApi.summary(id.value), staleTime: 55_000, refetchInterval: 60_000 });
+}
 export function useHealth(id: Ref<number>) {
   return useQuery({ queryKey: computed(() => qk.health(id.value)), queryFn: () => tokensApi.health(id.value), staleTime: 5 * 60_000 });
 }

@@ -7,6 +7,10 @@ export function useWatchlist() {
   return useQuery({ queryKey: qk.watchlist, queryFn: () => tokensApi.list(), staleTime: 55_000, refetchInterval: 60_000 });
 }
 
+export function useSummaries() {
+  return useQuery({ queryKey: qk.summaries, queryFn: () => tokensApi.summaries(), staleTime: 55_000, refetchInterval: 60_000 });
+}
+
 export function useWatchlistMutations() {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: qk.watchlist });

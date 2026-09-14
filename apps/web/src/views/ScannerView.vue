@@ -10,6 +10,8 @@ import { SCAN_STAGE2_REASONS } from '@tpm/shared';
 import { fmtDate, timeAgo } from '@/composables/useFormat';
 import { useScanExcluded, useScannerOverview, useScannerRun, useScanResults, useScanRetro, useScanRuns } from '@/queries/useScanner';
 import { useNotificationsStore } from '@/stores/notifications.store';
+import { storeToRefs } from 'pinia';
+import { useUiStore } from '@/stores/ui.store';
 
 const tab = ref<'results' | 'excluded' | 'retro' | 'runs' | 'settings'>('results');
 const days = ref(1);
@@ -21,6 +23,8 @@ const retro = useScanRetro();
 const runs = useScanRuns();
 const run = useScannerRun();
 const notify = useNotificationsStore();
+const { settings } = storeToRefs(useUiStore());
+const detail = computed(() => settings.value.mode === 'detail');
 const o = computed(() => overview.data.value?.data);
 const stage2Only = ref<'all' | 2 | 3>('all');
 const excludedRows = computed(() => (excluded.data.value?.data ?? []).filter((r) => stage2Only.value === 'all' || r.excludedStage === stage2Only.value));
@@ -56,10 +60,10 @@ async function runNow() {
     </nav>
 
     <template v-if="tab === 'results'">
-      <div class="row small"><span class="muted">Tokens gardés au cours des</span><select v-model.number="days" style="width:auto"><option :value="1">24 h</option><option :value="3">3 jours</option><option :value="7">7 jours</option></select><span class="muted">tri : drapeaux croissants, puis liquidité</span></div>
+      <div class="row small"><span class="muted">Tokens gardés au cours des</span><select v-model.number="days" style="width:auto"><option :value="1">24 h</option><option :value="3">3 jours</option><option :value="7">7 jours</option></select><span class="muted">tri : drapeaux croissants, puis liquidité. La colonne « Où l’acheter » liste les DEX connus par leur pool et, si le token a une fiche CoinGecko, les plateformes centralisées comme Kraken. Aucun bouton d’achat : c’est une information, pas une invitation.</span></div>
       <QueryState :loading="results.isLoading.value" :error="results.error.value" />
       <div v-if="results.data.value && !results.data.value.data.length" class="empty">Aucun token n'a passé les filtres sur la période. C'est normal la plupart du temps : les seuils sont faits pour éliminer.</div>
-      <ScanResultsTable v-else-if="results.data.value" :rows="results.data.value.data" mode="kept" />
+      <ScanResultsTable v-else-if="results.data.value" :rows="results.data.value.data" mode="kept" :detail="detail" />
     </template>
 
     <template v-else-if="tab === 'excluded'">
@@ -70,12 +74,12 @@ async function runNow() {
       </div>
       <QueryState :loading="excluded.isLoading.value" :error="excluded.error.value" />
       <div v-if="excluded.data.value && !excludedRows.length" class="empty">Aucune exclusion enregistrée.</div>
-      <ScanResultsTable v-else-if="excluded.data.value" :rows="excludedRows" mode="excluded" />
+      <ScanResultsTable v-else-if="excluded.data.value" :rows="excludedRows" mode="excluded" :detail="detail" />
     </template>
 
     <template v-else-if="tab === 'retro'">
       <QueryState :loading="retro.isLoading.value" :error="retro.error.value" />
-      <ScanRetroPanel v-if="retro.data.value" :retro="retro.data.value.data" />
+      <ScanRetroPanel v-if="retro.data.value" :retro="retro.data.value.data" :detail="detail" />
     </template>
 
     <template v-else-if="tab === 'runs'">

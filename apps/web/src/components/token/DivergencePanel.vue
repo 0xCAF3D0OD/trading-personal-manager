@@ -1,33 +1,48 @@
 <script setup lang="ts">
 import type { Divergence } from '@tpm/shared';
+import { computed } from 'vue';
 import TimeSeriesChart from '@/components/charts/TimeSeriesChart.vue';
+import CardMore from '@/components/shared/CardMore.vue';
 import StatusBadge from '@/components/shared/StatusBadge.vue';
-import { computed, ref } from 'vue';
+import Terme from '@/components/shared/Terme.vue';
 import { fmtPct } from '@/composables/useFormat';
+import { useCardDetail } from '@/composables/useCardDetail';
 const props = defineProps<{ divergences: Divergence[] }>();
-const showAll = ref(false);
+const { open, detailMode, toggle } = useCardDetail();
 const triggered = computed(() => props.divergences.filter((d) => d.status === 'triggered'));
-const shown = computed(() => (showAll.value ? props.divergences : triggered.value));
+const insufficient = computed(() => props.divergences.filter((d) => d.status === 'insufficient_data').length);
+const shown = computed(() => (open.value ? props.divergences : triggered.value));
+function series(d: Divergence) {
+  return [
+    { label: d.seriesA.label, unit: d.seriesA.unit, points: d.seriesA.points },
+    { label: d.seriesB.label, unit: d.seriesB.unit, points: d.seriesB.points },
+  ];
+}
 </script>
 <template>
-  <section class="card">
+  <section id="card-divergences" class="card">
     <div class="card-head">
-      <h2>Détection de divergences</h2>
-      <div class="row"><span class="faint small">{{ triggered.length }} anormale(s) sur {{ divergences.length }} règles</span><button class="ghost small" @click="showAll = !showAll">{{ showAll ? 'Seulement les anormales' : 'Tout afficher' }}</button></div>
+      <h2>Le marché confirme-t-il l’histoire ?</h2>
+      <span class="faint small">{{ triggered.length }} <Terme mot="divergence">contradiction(s)</Terme> sur {{ divergences.length }} règles, calculé sur les relevés quotidiens</span>
     </div>
-    <p class="small muted">Chaque règle est affichée avec les deux séries qui la composent. Pas de voyant unique.</p>
-    <div v-if="!shown.length" class="empty">Aucune divergence anormale sur les séries historisées.</div>
-    <div class="grid grid-2">
+    <p v-if="!triggered.length" class="muted" style="margin:0">
+      <template v-if="divergences.length - insufficient <= 1">Trop tôt : les règles demandent plusieurs jours de relevés quotidiens.</template>
+      <template v-else>Aucune contradiction entre prix, volume, liquidité et détenteurs.</template>
+    </p>
+    <div v-if="shown.length" class="grid grid-2" style="margin-top:.5rem">
       <article v-for="d in shown" :key="d.id" class="card" style="background: var(--bg-elev-2)">
         <div class="card-head"><h3 style="color:var(--text)">{{ d.label }}</h3><StatusBadge :status="d.status" /></div>
-        <p class="small faint">Règle : {{ d.ruleText }}</p>
         <p class="small">{{ d.explanation }}</p>
-        <div class="row small" style="gap:1rem">
-          <span><span style="color:var(--chart-a)">●</span> {{ d.seriesA.label }} : <strong>{{ d.seriesA.changePct === null ? '—' : fmtPct(d.seriesA.changePct, { digits: 1 }) }}</strong></span>
-          <span><span style="color:var(--chart-b)">●</span> {{ d.seriesB.label }} : <strong>{{ d.seriesB.changePct === null ? '—' : fmtPct(d.seriesB.changePct, { digits: 1 }) }}</strong></span>
-        </div>
-        <TimeSeriesChart :series="[{ label: d.seriesA.label, points: d.seriesA.points, unit: d.seriesA.unit }, { label: d.seriesB.label, points: d.seriesB.points, unit: d.seriesB.unit }]" :height="150" />
+        <template v-if="open">
+          <p class="faint small">Règle : {{ d.ruleText }} · fenêtre {{ d.windowDays }} j</p>
+          <div class="row small" style="gap:1rem;margin-bottom:.4rem">
+            <span>{{ d.seriesA.label }} : <strong>{{ fmtPct(d.seriesA.changePct) }}</strong></span>
+            <span>{{ d.seriesB.label }} : <strong>{{ fmtPct(d.seriesB.changePct) }}</strong></span>
+          </div>
+          <TimeSeriesChart :series="series(d)" :height="140" />
+        </template>
       </article>
     </div>
+    <CardMore :open="open" :hidden="detailMode" @toggle="toggle" />
   </section>
 </template>

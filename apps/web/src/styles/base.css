@@ -87,3 +87,25 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .toast.success { border-left-color: var(--ok); }
 .uplot, .uplot *, .uplot *::before, .uplot *::after { box-sizing: border-box; }
 .u-legend { font-size: .75rem; color: var(--text-muted); }
+
+/* --- Lecture simple (docs/05) --- */
+.grid-1 { grid-template-columns: 1fr; }
+.tabs { gap: .25rem; border-bottom: 1px solid var(--border); padding-bottom: .5rem; }
+.mode-toggle { white-space: nowrap; }
+.term { border-bottom: 1px dotted var(--text-faint); cursor: help; text-decoration: none; }
+.term:focus { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+.card-more { margin-top: .6rem; padding-top: .4rem; border-top: 1px dashed var(--border); text-align: right; }
+ul.plain { list-style: none; margin: 0; padding: 0; }
+.summary-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .6rem; }
+.summary-row { display: grid; grid-template-columns: minmax(200px, 1fr) 3fr; gap: .5rem 1rem; align-items: start; padding: .35rem 0; border-bottom: 1px solid var(--border); }
+.summary-row:last-child { border-bottom: 0; }
+.summary-q { display: flex; align-items: center; gap: .5rem; }
+.summary-dot { display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; background: var(--text-faint); flex: 0 0 auto; margin-right: .35rem; }
+.summary-state { font-weight: 600; margin-right: .4rem; }
+.state-ok .summary-dot, .state-ok .summary-state { background: var(--ok); color: var(--ok); }
+.state-warn .summary-dot, .state-warn .summary-state { background: var(--warning); color: var(--warning); }
+.state-risk .summary-dot, .state-risk .summary-state { background: var(--risk); color: var(--risk); }
+.state-partial .summary-dot, .state-partial .summary-state, .state-unknown .summary-dot, .state-unknown .summary-state { background: var(--text-faint); color: var(--text-muted); }
+.state-ok .summary-dot, .state-warn .summary-dot, .state-risk .summary-dot, .state-partial .summary-dot, .state-unknown .summary-dot { color: transparent; }
+.summary-cell { white-space: nowrap; font-size: .85rem; }
+@media (max-width: 720px) { .summary-row { grid-template-columns: 1fr; } .topbar nav { gap: .6rem; } }
