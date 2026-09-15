@@ -48,6 +48,16 @@ Corrections du 14 septembre 2026, après relecture d'un rapport produit par l'IA
 - **Libellé de dérivée** : « Baisse régulière, sans accélération » ou « Hausse régulière, sans accélération » quand toutes les fenêtres vont dans le même sens sans monotonie ; « Sans tendance nette » seulement quand les sens sont mêlés.
 - **Le dossier** dit que les états sont posés par l'outil (pas de total, l'IA n'en produit pas d'autre), affiche l'âge de chaque relevé et l'écart entre le plus ancien et le plus récent, et classe « non calculable » une divergence dont les deux séries sont vides au lieu de « au repos ».
 
+Corrections du 15 septembre 2026, après une deuxième relecture par l'IA (retour de Kevin) :
+
+- **Variation 24 h cohérente** : la question 5 lit la même paire, au même instant, que la carte Prix (dernier relevé DexScreener en cache) et porte cet horodatage ; plus deux chiffres différents « à la même seconde ».
+- **L'état de « Puis-je sortir ? » est porté par le pool principal**, celui que la route de vente traverse ; le total de tous les pools reste dit à côté, avec la mention que les petits pools ne comptent pas pour une sortie quand les deux bandes diffèrent. Retour partiel sur la décision du 14 septembre : le total servait à un gros token comme Bonk, mais il masquait un pool principal mince.
+- **Jamais « 0,0 % » de slippage** : deux décimales, et « moins de 0,01 % » quand la cotation rend au moins le prix de référence.
+- **Repère de taille d'ordre** : 1 % de la liquidité du pool principal (réglable, module `ui`), en dollars, « au-delà, c'est votre propre ordre qui fait le prix ». Un repère mécanique, pas une recommandation.
+- **Créateur** : sans métadonnées Metaplex (tokens de launchpad), repli sur le premier signataire de la première transaction du mint, au RPC, sans Solscan. Question 4 moins souvent aveugle.
+- **Actualités** : les pages de cours (CoinGecko, CoinMarketCap, pages « price » des exchanges, explorateurs) remontées par Google News sont ignorées (`quotePageDomains`, réglable). Le dossier dit explicitement « surveillance du site et du compte X non active » quand aucune source du projet n'est déclarée.
+- **Consigne v2** : les états sont une lecture de l'outil à rapporter tels quels ; définir seulement les termes employés. **Glossaire** limité aux termes présents dans le dossier.
+
 Règles :
 
 - **La finalité est écrite** : au-dessus des cinq questions, une phrase fixe (« Personne ne peut dire si ce token vous rapportera. Ces cinq questions disent ce qui peut vous faire perdre, et chacune est vérifiable. »), et sous chaque question une ligne « à quoi ça sert » rapportée à l'argent du lecteur (`SUMMARY_PURPOSE`, partagée avec les cartes). Demandé par Kevin le 14 septembre 2026 : le visiteur doit savoir à quoi sert chaque information.

@@ -19,6 +19,8 @@ export const WatchSettings = z.object({
   teamSellMinPctSupply: z.number().min(0),
   tokenomicsKeywords: z.array(z.string().min(2)),
   prWireDomains: z.array(z.string().min(3)),
+  /** Pages de cours (CoinGecko, exchanges…) remontées par Google News : ce ne sont pas des actualités, on les ignore. */
+  quotePageDomains: z.array(z.string().min(3)),
   sponsoredPatterns: z.array(z.string().min(2)),
   exchangeFeeds: z.array(z.object({ name: z.string(), url: z.string().url() })),
   incineratorAddresses: z.array(z.string().min(32)),
@@ -51,6 +53,12 @@ export const WATCH_DEFAULTS: WatchSettings = {
     'einpresswire.com', 'issuewire.com', 'openpr.com', 'prlog.org', 'marketwatch.com/press-release',
     'cointelegraph.com/press-releases', 'bitcoinist.com/press-release', 'newsbtc.com/press-releases',
     'cryptonews.com/news/pr', 'coincodex.com/article/press', 'techbullion.com', 'analyticsinsight.net',
+  ],
+  quotePageDomains: [
+    'coingecko.com', 'coinmarketcap.com', 'coinpaprika.com', 'coincodex.com', 'livecoinwatch.com', 'cryptorank.io', 'coinlore.com',
+    'dexscreener.com', 'geckoterminal.com', 'birdeye.so', 'solscan.io', 'dextools.io',
+    'phemex.com', 'bitget.com/price', 'binance.com/price', 'kraken.com/prices', 'coinbase.com/price', 'crypto.com/price', 'mexc.com/price',
+    'gate.io/price', 'htx.com/price', 'kucoin.com/price', 'okx.com/price', 'bybit.com/price', 'bingx.com/price', 'lbank.com/price',
   ],
   sponsoredPatterns: ['sponsored', 'sponsorisé', 'sponsorise', 'partner content', 'paid partnership', 'contenu partenaire', 'made with ai', 'advertorial', 'publi-rédactionnel', 'press release', 'communiqué de presse'],
   exchangeFeeds: [

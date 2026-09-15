@@ -83,6 +83,7 @@ export class DossierService {
       health, market, supply,
       holders: this.s.holders.getView(tokenId),
       creator,
+      watchSources: this.s.watchPages.sources(tokenId).map((w) => ({ kind: w.kind, label: w.label, enabled: w.enabled })),
       changes: this.s.watchPages.changes(tokenId).filter((c) => c.detectedAt >= since30),
       claims: this.s.claims.list(tokenId),
       news: this.s.news.list(tokenId, ['news', 'listing']).filter((n) => n.publishedAt >= since30),

@@ -151,22 +151,43 @@ export class SolanaRpcSource {
       }
     }
     // La PDA de métadonnées a très peu de transactions : sa plus ancienne signature ≈ création du token.
-    let createdAt: number | null = null;
     const target = r.value ? pda : mint;
-    createdAt = await this.oldestSignatureTime(target, 3);
+    const oldest = await this.oldestSignature(target, 3);
+    const createdAt = oldest?.blockTime ?? null;
+    // Repli sans métadonnées (tokens de launchpad) : le premier signataire de la première transaction du mint.
+    // C'est ce que les explorateurs affichent comme « créateur ». Payeur des frais, donc l'humain ou son launchpad.
+    if (!creator && oldest) {
+      try {
+        const first = r.value ? await this.oldestSignature(mint, 3) : oldest;
+        if (first) creator = await this.feePayerOf(first.signature);
+      } catch { creator = null; }
+    }
     return { creator, createdAt, name, symbol, source: 'rpc' };
   }
 
   async oldestSignatureTime(address: string, maxPages: number): Promise<number | null> {
+    return (await this.oldestSignature(address, maxPages))?.blockTime ?? null;
+  }
+
+  /** Premier signataire (payeur des frais) d'une transaction : `accountKeys[0]` en encodage json. */
+  async feePayerOf(signature: string): Promise<string | null> {
+    const tx = await this.call<{ transaction?: { message?: { accountKeys?: (string | { pubkey: string })[] } } } | null>('getTransaction', [signature, { encoding: 'json', maxSupportedTransactionVersion: 0, commitment: 'confirmed' }], 1);
+    const k = tx?.transaction?.message?.accountKeys?.[0];
+    const payer = typeof k === 'string' ? k : k?.pubkey ?? null;
+    return payer && payer !== SYSTEM_PROGRAM ? payer : null;
+  }
+
+  /** Plus ancienne signature connue d'une adresse, ou null si trop de pages pour être sûr d'avoir atteint la première. */
+  async oldestSignature(address: string, maxPages: number): Promise<{ signature: string; blockTime: number | null } | null> {
     let before: string | undefined;
-    let oldest: number | null = null;
+    let oldest: { signature: string; blockTime: number | null } | null = null;
     for (let page = 0; page < maxPages; page++) {
       const sigs = await this.call<{ signature: string; blockTime: number | null }[]>('getSignaturesForAddress', [
         address, { limit: 1000, ...(before ? { before } : {}), commitment: 'confirmed' },
       ]);
       if (!sigs.length) break;
       const last = sigs[sigs.length - 1] as { signature: string; blockTime: number | null };
-      if (last.blockTime) oldest = last.blockTime;
+      oldest = { signature: last.signature, blockTime: last.blockTime };
       before = last.signature;
       if (sigs.length < 1000) return oldest;
     }
