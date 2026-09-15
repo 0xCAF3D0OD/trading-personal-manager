@@ -26,8 +26,11 @@ export class SolanaRpcSource {
   readonly name: SourceName;
   private id = 1;
 
+  /** Budget de pages (1 000 signatures chacune) pour remonter à la première transaction : large sur Helius, prudent sur le RPC public. */
+  private readonly sigPageBudget: number;
   constructor(private readonly deps: HttpDeps, private readonly url: string, isHelius: boolean) {
     this.name = isHelius ? 'helius' : 'rpc';
+    this.sigPageBudget = isHelius ? 30 : 3;
   }
 
   async call<T>(method: string, params: unknown[], cu = 0): Promise<T> {
@@ -152,13 +155,13 @@ export class SolanaRpcSource {
     }
     // La PDA de métadonnées a très peu de transactions : sa plus ancienne signature ≈ création du token.
     const target = r.value ? pda : mint;
-    const oldest = await this.oldestSignature(target, 3);
+    const oldest = await this.oldestSignature(target, this.sigPageBudget);
     const createdAt = oldest?.blockTime ?? null;
     // Repli sans métadonnées (tokens de launchpad) : le premier signataire de la première transaction du mint.
     // C'est ce que les explorateurs affichent comme « créateur ». Payeur des frais, donc l'humain ou son launchpad.
     if (!creator && oldest) {
       try {
-        const first = r.value ? await this.oldestSignature(mint, 3) : oldest;
+        const first = r.value ? await this.oldestSignature(mint, this.sigPageBudget) : oldest;
         if (first) creator = await this.feePayerOf(first.signature);
       } catch { creator = null; }
     }
