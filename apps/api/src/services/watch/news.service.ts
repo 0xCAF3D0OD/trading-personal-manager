@@ -73,6 +73,8 @@ export class NewsService {
       if (!it.title || !it.url) continue;
       const canonical = canonicalUrl(it.url);
       const domain = domainOf(it.url);
+      // Une page de cours n'est pas une actualité : elle donne une fausse impression de couverture.
+      if (cfg.quotePageDomains.some((d) => `${domain}${canonical.replace(/^https?:\/\/[^/]+/, '')}`.includes(d) || canonical.includes(d))) continue;
       const firstSeen = this.ctx.news.domainFirstSeen(domain);
       const cls = classifyNews({
         title: it.title, url: it.url, content: it.content, symbol,

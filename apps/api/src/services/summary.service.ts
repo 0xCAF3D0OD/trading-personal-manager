@@ -1,4 +1,5 @@
 import type { MarketSettings, TokenSummary, UiSettings } from '@tpm/shared';
+import type { PairInfo } from '../datasources/types.js';
 import { isSolanaAddress } from '@tpm/shared';
 import { SYSTEM_PROGRAM } from '../datasources/rpc/solana-rpc.source.js';
 import { nowS } from '../db/client.js';
@@ -31,10 +32,15 @@ export class SummaryService {
     try { extensions = h ? (JSON.parse(h.token2022_extensions) as string[]) : []; } catch { extensions = []; }
 
     const m = this.ctx.snapshots.latestMarket(tokenId);
-    // Question 2 : tous les pools connus, pas seulement le principal, sinon un gros token à liquidité répartie paraît invendable.
-    const liqAll = m ? (m.liquidityTotalUsd ?? m.liquidityUsd) : null;
-    const ratio = m && liqAll !== null && m.marketCapUsd ? (liqAll / m.marketCapUsd) * 100 : null;
+    // Question 2 : l'état est porté par le pool principal (une route de vente ne traverse pas tous les pools) ; le total est dit à côté.
+    const ratio = m && m.liquidityUsd !== null && m.marketCapUsd ? (m.liquidityUsd / m.marketCapUsd) * 100 : null;
     const band = liquidityBand(ratio, marketCfg.liquidityBands);
+    const liqAll = m ? (m.liquidityTotalUsd ?? m.liquidityUsd) : null;
+    const totalRatio = m && liqAll !== null && m.marketCapUsd ? (liqAll / m.marketCapUsd) * 100 : null;
+    const totalBand = liquidityBand(totalRatio, marketCfg.liquidityBands);
+    // Variation 24 h : la même paire, au même instant, que la carte Prix (dernier relevé DexScreener en cache), sinon le dernier snapshot.
+    const livePairs = this.ctx.cache.peekStale<PairInfo[]>(`ds:pairs:${token.address}`);
+    const livePair = livePairs?.value?.[0] ?? null;
 
     const slips = this.ctx.snapshots.slippageHistory(tokenId, now - 7 * 86400);
     const slip = [...slips].reverse().find((x) => x.orderUsd === ui.summarySlippageOrderUsd) ?? [...slips].reverse()[0] ?? null;
@@ -52,7 +58,7 @@ export class SummaryService {
 
     const inputs: SummaryInputs = {
       health: h ? { mintAuthority: h.mint_authority, freezeAuthority: h.freeze_authority, extensions, checkedAt: h.checked_at, ageDays, young: ageDays !== null && ageDays < 7, lpLocked: h.lp_locked === null ? null : h.lp_locked === 1, lpLockedPct: h.lp_locked_pct, lpLockProtocol: h.lp_lock_protocol } : null,
-      liquidity: m ? { ratioPct: ratio, band: band.band, totalUsd: liqAll, poolsCount: m.poolsCount ?? (m.liquidityUsd !== null ? 1 : 0), ts: m.ts, source: m.liquiditySource ?? m.priceSource } : null,
+      liquidity: m ? { ratioPct: ratio, band: band.band, mainPoolUsd: m.liquidityUsd, totalRatioPct: totalRatio, totalBand: totalBand.band, totalUsd: liqAll, poolsCount: m.poolsCount ?? (m.liquidityUsd !== null ? 1 : 0), ts: m.ts, source: m.liquiditySource ?? m.priceSource } : null,
       slippage: slip ? { orderUsd: slip.orderUsd, impactPct: slip.impactPct, ts: slip.ts } : null,
       holders: latestHolders ? { top10Pct: latestHolders.top10Pct, holderCount: latestHolders.holderCount, truncated: latestHolders.truncated, ts: latestHolders.ts, source: latestHolders.source, fullTierMissing, ageDays } : null,
       team: {
@@ -68,7 +74,8 @@ export class SummaryService {
         triggered: divs.filter((d) => d.status === 'triggered').map((d) => d.label),
         evaluated: divs.length, insufficient: divs.filter((d) => d.status === 'insufficient_data').length,
         computedAt: divs[0]?.computedAt ?? null,
-        priceChange24hPct: m?.pctH24 ?? null,
+        priceChange24hPct: livePair?.priceChange.h24 ?? m?.pctH24 ?? null,
+        priceChangeAt: livePair ? livePairs!.fetchedAt : m?.ts ?? null,
       },
     };
     return { tokenId, answers: buildSummary(inputs, ui), computedAt: now };

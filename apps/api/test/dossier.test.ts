@@ -20,7 +20,7 @@ function inputs(over: Partial<DossierInputs> = {}): DossierInputs {
       ],
     },
     health: null, market: null, supply: null, holders: null, creator: null,
-    changes: [], claims: [], news: [], actions: [], divergences: [],
+    watchSources: [], changes: [], claims: [], news: [], actions: [], divergences: [],
     plans: null, generatedAt: now, ...over,
   };
 }
@@ -34,7 +34,11 @@ describe('Dossier pour l’IA', () => {
     for (const q of ['Peut-on me piéger ?', 'Puis-je sortir ?', 'Qui tient le token ?', 'Que fait l’équipe ?', 'Le marché confirme-t-il l’histoire ?']) expect(md).toContain(q);
     expect(md).toContain('À quoi ça sert : Un gain n’existe que si vous pouvez vendre.');
     expect(md).toContain('variable manquante : SOLANA_RPC_URL (URL Helius)');
-    for (const term of Object.keys(GLOSSARY).slice(0, 5)) expect(md).toContain(`**${term}**`);
+    // Glossaire limité aux termes employés : « liquidité » l'est (question 2), « produit constant » ne l'est pas ici.
+    expect(md).toContain('**liquidité**');
+    expect(md).not.toContain('**produit constant**');
+    expect(Object.keys(GLOSSARY).length).toBeGreaterThan(20);
+    expect(md).toContain('Surveillance du site et du compte X non active');
     expect(md).toContain('aucune n\'est une recommandation');
   });
 

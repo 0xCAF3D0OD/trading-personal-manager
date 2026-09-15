@@ -25,8 +25,10 @@ const age = (h: number | null) => (h === null ? 'âge inconnu' : h < 48 ? `${Mat
 function header(title: string, intro: string, generatedAt: number): string[] {
   return [`# ${title}`, '', `> Consigne pour l'IA (version ${AI_REPORT_PROMPT_VERSION})`, ...COLLECTION_PROMPT.split('\n').map((l) => `> ${l}`), '', intro, '', `Généré le ${date(generatedAt)}.`, ''];
 }
-function glossary(): string[] {
-  return ['## Glossaire', '', ...Object.entries(GLOSSARY).map(([t, d]) => `- **${t}** : ${d}`), '', '---', '', 'Produit par trading-personal-manager. Données observées, aucune n’est une recommandation.', ''];
+function glossary(body: string[]): string[] {
+  const text = body.join('\n').toLowerCase();
+  const used = Object.entries(GLOSSARY).filter(([t]) => text.includes(t.toLowerCase()));
+  return ['## Glossaire (termes employés dans ce dossier)', '', ...used.map(([t, d]) => `- **${t}** : ${d}`), '', '---', '', 'Produit par trading-personal-manager. Données observées, aucune n’est une recommandation.', ''];
 }
 
 export interface ListDossierInputs { items: WatchlistItem[]; summaries: Record<number, TokenSummary>; tier: string; generatedAt: number; filterNote: string | null }
@@ -51,7 +53,7 @@ export function buildListDossier(i: ListDossierInputs): string {
     else for (const a of s.answers) L.push(`- **${a.question}** ${a.answer} (${a.source}${a.fetchedAt ? `, ${date(a.fetchedAt)}` : ''})${a.missing ? ` · variable manquante : ${a.missing}` : ''}`);
     L.push('');
   });
-  L.push(...glossary());
+  L.push(...glossary(L));
   return L.join('\n');
 }
 
@@ -88,6 +90,6 @@ export function buildScannerDossier(i: ScannerDossierInputs): string {
     for (const s of i.retro.stats) L.push(`- ${s.horizon === 'd1' ? 'J+1' : s.horizon === 'd7' ? 'J+7' : 'J+30'} : ${s.count} token(s) échus, ${s.unavailable} disparu(s) · médiane ${pct(s.withLoss.medianPct, 0)} (disparus à −100 %) / ${pct(s.excluding.medianPct, 0)} (exclus) · en gain ${pct(s.withLoss.positivePct, 0)} · sous −50 % ${pct(s.withLoss.belowMinus50Pct, 0)}`);
     L.push('');
   }
-  L.push(...glossary());
+  L.push(...glossary(L));
   return L.join('\n');
 }

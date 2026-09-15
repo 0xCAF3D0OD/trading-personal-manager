@@ -17,6 +17,8 @@ export const UiSettings = z.object({
   summarySlippageOrderUsd: z.number().positive(),
   /** Le plan du journal est personnel : exclu du dossier (partie B) sauf choix explicite. */
   dossierIncludesPlan: z.boolean(),
+  /** Repère de taille d'ordre : part de la liquidité du pool principal au-delà de laquelle votre propre ordre fait le prix. */
+  orderSizeShareOfPoolPct: z.number().min(0.1).max(10),
 });
 export type UiSettings = z.infer<typeof UiSettings>;
 
@@ -26,4 +28,5 @@ export const UI_DEFAULTS: UiSettings = {
   summaryTop10ConcentratedPct: 40,
   summarySlippageOrderUsd: 1000,
   dossierIncludesPlan: false,
+  orderSizeShareOfPoolPct: 1,
 };

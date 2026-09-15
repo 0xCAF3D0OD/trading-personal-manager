@@ -52,6 +52,7 @@ function resetAll() { if (window.confirm('Remettre les réglages d’affichage �
         <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
           <div><label>Top 10 « concentré » au-delà de (%)</label><input v-model.number="form.summaryTop10ConcentratedPct" type="number" step="1" min="1" max="100" /><div class="faint small">Même seuil que le drapeau du scanner.</div></div>
           <div><label>Taille d’ordre lue pour « Puis-je sortir ? » ($)</label><input v-model.number="form.summarySlippageOrderUsd" type="number" step="100" min="1" /><div class="faint small">Doit être l’une des tailles du slippage (réglages du marché).</div></div>
+          <div><label>Repère de taille : part du pool principal (%)</label><input v-model.number="form.orderSizeShareOfPoolPct" type="number" step="0.5" min="0.1" max="10" /><div class="faint small">Au-delà de cette part de la liquidité du pool principal, votre propre ordre fait le prix. Un repère, pas une recommandation.</div></div>
         </div>
       </section>
       <section class="card">

@@ -16,6 +16,8 @@ export interface DossierInputs {
   supply: SupplyView | null;
   holders: HoldersView | null;
   creator: { creatorAddress: string | null; available: boolean; activities: { ts: number; kind: string; description: string | null; amount: number | null; amountUsd: number | null }[] } | null;
+  /** Sources déclarées dans la veille : sans site ni compte X, la section 8 ne couvre rien du projet lui-même. */
+  watchSources: { kind: string; label: string; enabled: boolean }[];
   changes: PageChange[];
   claims: Claim[];
   news: NewsItem[];
@@ -121,6 +123,9 @@ export function buildDossier(i: DossierInputs): string {
   L.push('');
 
   L.push('## 8. Veille : changements et actualités (30 jours)', '');
+  const projectSources = i.watchSources.filter((s) => s.enabled && ['website', 'docs', 'github', 'x_account'].includes(s.kind));
+  if (!projectSources.length) L.push('**Surveillance du site et du compte X non active** : aucune source du projet n’est déclarée dans la veille. Cette section ne couvre donc ni le site, ni les annonces, ni une éventuelle suspension du compte X. Ce qui suit vient uniquement de recherches d’actualités tierces.', '');
+  else L.push(`Sources du projet surveillées : ${projectSources.map((s) => `${s.label} (${s.kind})`).join(', ')}.`, '');
   if (!i.changes.length && !i.news.length) L.push('Rien d’enregistré.', '');
   else {
     for (const c of i.changes.slice(0, 20)) {
@@ -149,8 +154,11 @@ export function buildDossier(i: DossierInputs): string {
     if (i.plans.length) L.push('');
   }
 
-  L.push('## Glossaire', '');
-  for (const [term, def] of Object.entries(GLOSSARY)) L.push(`- **${term}** : ${def}`);
+  // Glossaire limité aux termes réellement présents dans le dossier : un rapport n'a pas à porter 25 définitions.
+  const body = L.join('\n').toLowerCase();
+  const used = Object.entries(GLOSSARY).filter(([term]) => body.includes(term.toLowerCase()));
+  L.push('## Glossaire (termes employés dans ce dossier)', '');
+  for (const [term, def] of used) L.push(`- **${term}** : ${def}`);
   L.push('', '---', '', `Généré le ${date(i.generatedAt)} par trading-personal-manager. Données observées, aucune n'est une recommandation.`, '');
   return L.join('\n');
 }

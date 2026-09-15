@@ -8,21 +8,21 @@ import { SUMMARY_PURPOSE } from '@tpm/shared';
  */
 export interface SummaryInputs {
   health: { mintAuthority: string | null; freezeAuthority: string | null; extensions: string[]; checkedAt: number; ageDays: number | null; young: boolean; lpLocked: boolean | null; lpLockedPct: number | null; lpLockProtocol: string | null } | null;
-  liquidity: { ratioPct: number | null; band: LiquidityBand | null; totalUsd: number | null; poolsCount: number; ts: number; source: SourceName } | null;
+  liquidity: { ratioPct: number | null; band: LiquidityBand | null; mainPoolUsd: number | null; totalRatioPct: number | null; totalBand: LiquidityBand | null; totalUsd: number | null; poolsCount: number; ts: number; source: SourceName } | null;
   slippage: { orderUsd: number; impactPct: number | null; ts: number } | null;
   holders: { top10Pct: number | null; holderCount: number | null; truncated: boolean; ts: number; source: SourceName; fullTierMissing: string | null; ageDays: number | null } | null;
   team: {
     creatorKnown: boolean; walletsCount: number; actionsAvailable: boolean; sells: number; transfersOut: number; lpRemovals: number;
     lastActionTs: number | null; claimsKept: number; claimsContradicted: number; claimsExpired: number; claimsPending: number;
   };
-  divergences: { triggered: string[]; evaluated: number; insufficient: number; computedAt: number | null; priceChange24hPct: number | null };
+  divergences: { triggered: string[]; evaluated: number; insufficient: number; computedAt: number | null; priceChange24hPct: number | null; priceChangeAt: number | null };
 }
 
 /** Mêmes seuils que la coloration de la carte Liquidité : au-delà de 3 % on prévient, au-delà de 10 % c'est un risque. */
 const SLIPPAGE_WARN_PCT = 3;
 const SLIPPAGE_RISK_PCT = 10;
 
-export interface SummarySettings { summaryTop10ConcentratedPct: number; summarySlippageOrderUsd: number }
+export interface SummarySettings { summaryTop10ConcentratedPct: number; summarySlippageOrderUsd: number; orderSizeShareOfPoolPct: number }
 
 const RISKY_EXT: Record<string, string> = {
   transferFeeConfig: 'prélever des frais à chaque transfert',
@@ -57,15 +57,20 @@ function exit(i: SummaryInputs, s: SummarySettings): SummaryAnswer {
     return { ...base, state: 'unknown', source: l?.source ?? 'unavailable', fetchedAt: l?.ts ?? null, short: 'inconnu', answer: 'Inconnu : aucun relevé de liquidité rapporté à la capitalisation.' };
   }
   const slipPct = i.slippage?.impactPct ?? null;
+  // Jamais « 0,0 % » : le slippage n'est jamais exactement nul, seulement en dessous de ce que la cotation laisse voir.
   const slip = slipPct !== null
-    ? ` Vendre ${usd(i.slippage!.orderUsd)} coûterait ${pct(slipPct, 1)}${slipPct >= SLIPPAGE_RISK_PCT ? ' : c’est le coût réel de la sortie, et il contredit le ratio' : ''}.`
+    ? ` Vendre ${usd(i.slippage!.orderUsd)} coûterait ${slipPct < 0.01 ? 'moins de 0,01 % (la cotation rend au moins le prix de référence)' : pct(slipPct, 2)}${slipPct >= SLIPPAGE_RISK_PCT ? ' : c’est le coût réel de la sortie, et il contredit le ratio' : ''}.`
     : ` Coût d’une vente de ${usd(s.summarySlippageOrderUsd)} non estimé : cliquez sur Estimer.`;
+  const marker = l.mainPoolUsd !== null && l.mainPoolUsd > 0 ? ` Repère de taille : ${s.orderSizeShareOfPoolPct} % du pool principal = ${usd(l.mainPoolUsd * s.orderSizeShareOfPoolPct / 100)} ; au-delà, c’est votre propre ordre qui fait le prix.` : '';
   const lock = i.health?.lpLocked === true
     ? ` Liquidité verrouillée${i.health.lpLockedPct !== null ? ` à ${pct(i.health.lpLockedPct, 0)}` : ''}${i.health.lpLockProtocol ? ` (${i.health.lpLockProtocol})` : ''}, date de déverrouillage inconnue.`
     : i.health?.lpLocked === false ? ' Liquidité non verrouillée : elle peut être retirée à tout moment.' : '';
+  // L'état est porté par le pool principal : une route de vente ne traverse pas 24 pools. Le total reste une information secondaire.
   const ratio = `${pct(l.ratioPct, 1)} de la capitalisation (égale à la FDV : rien ne distingue des tokens verrouillés)`;
-  // DexScreener plafonne la liste à 30 pools : au-delà, on le dit plutôt que de laisser croire à un compte exact.
-  const where = l.poolsCount >= 30 ? ' sur les 30 pools les plus liquides (liste plafonnée par la source, hors plateformes centralisées)' : l.poolsCount > 1 ? ` sur ${l.poolsCount} pools` : ' dans le seul pool connu';
+  const where = ' dans le pool principal';
+  const others = l.poolsCount > 1 && l.totalRatioPct !== null
+    ? ` Tous pools confondus (${l.poolsCount >= 30 ? '30 au moins, liste plafonnée par la source' : l.poolsCount}) : ${pct(l.totalRatioPct, 1)}${l.totalBand && l.band && l.totalBand !== l.band ? ', mais les petits pools ne comptent pas pour une sortie : la route de vente ne les traverse pas' : ''}.`
+    : '';
   let state: SummaryState = l.band === 'very_thin' ? 'risk' : l.band === 'thin' ? 'warn' : 'ok';
   let short = l.band === 'very_thin' ? 'très mince' : l.band === 'thin' ? 'mince' : l.band === 'correct' ? 'correcte' : 'confortable';
   // Le coût réel de la sortie prime sur le ratio : un ratio confortable avec 77 % de perte à la vente n'est pas « sans mal ».
@@ -77,7 +82,7 @@ function exit(i: SummaryInputs, s: SummarySettings): SummaryAnswer {
     : state === 'warn'
       ? `Avec prudence : ${l.band === 'thin' ? 'liquidité mince, ' : ''}${ratio} est disponible pour vendre${where}.`
       : `Oui, sans mal : ${ratio} est disponible pour vendre${where}.`;
-  return { ...base, state, source: l.source, fetchedAt: l.ts, short, answer: head + slip + lock };
+  return { ...base, state, source: l.source, fetchedAt: l.ts, short, answer: head + others + slip + marker + lock };
 }
 
 function holders(i: SummaryInputs, s: SummarySettings): SummaryAnswer {
@@ -130,13 +135,13 @@ function market(i: SummaryInputs): SummaryAnswer {
   const moveShort = bigMove ? `${d.priceChange24hPct! >= 0 ? '+' : ''}${pct(d.priceChange24hPct!, 0)} / 24 h` : '';
   // Une règle vide de sens sur un token neuf (burn annoncé sans engagement) peut être « ok » à elle seule : on exige au moins deux règles réellement évaluées.
   if (d.evaluated === 0 || d.evaluated - d.insufficient <= 1) {
-    return { ...base, state: bigMove ? 'warn' : 'unknown', fetchedAt: d.computedAt, short: bigMove ? moveShort : 'trop tôt', answer: `Trop tôt : les divergences demandent plusieurs jours de relevés quotidiens.${move}` };
+    return { ...base, state: bigMove ? 'warn' : 'unknown', fetchedAt: d.priceChangeAt ?? d.computedAt, short: bigMove ? moveShort : 'trop tôt', answer: `Trop tôt : les divergences demandent plusieurs jours de relevés quotidiens.${move}` };
   }
   if (!d.triggered.length) {
-    return { ...base, state: bigMove ? 'warn' : 'ok', fetchedAt: d.computedAt, short: bigMove ? `cohérent, ${moveShort}` : 'cohérent', answer: `Aucune contradiction entre prix, volume, liquidité et détenteurs sur ${d.evaluated - d.insufficient} règle${d.evaluated - d.insufficient > 1 ? 's' : ''} évaluée${d.evaluated - d.insufficient > 1 ? 's' : ''}.${move}` };
+    return { ...base, state: bigMove ? 'warn' : 'ok', fetchedAt: d.priceChangeAt ?? d.computedAt, short: bigMove ? `cohérent, ${moveShort}` : 'cohérent', answer: `Aucune contradiction entre prix, volume, liquidité et détenteurs sur ${d.evaluated - d.insufficient} règle${d.evaluated - d.insufficient > 1 ? 's' : ''} évaluée${d.evaluated - d.insufficient > 1 ? 's' : ''}.${move}` };
   }
   const n = d.triggered.length;
-  return { ...base, state: n >= 2 ? 'risk' : 'warn', fetchedAt: d.computedAt, short: `${n} contradiction${n > 1 ? 's' : ''}`, answer: `${n} contradiction${n > 1 ? 's' : ''} : ${d.triggered.map((x) => x.toLowerCase()).join(' ; ')}.${move}` };
+  return { ...base, state: n >= 2 ? 'risk' : 'warn', fetchedAt: d.priceChangeAt ?? d.computedAt, short: `${n} contradiction${n > 1 ? 's' : ''}`, answer: `${n} contradiction${n > 1 ? 's' : ''} : ${d.triggered.map((x) => x.toLowerCase()).join(' ; ')}.${move}` };
 }
 
 export function buildSummary(i: SummaryInputs, s: SummarySettings): SummaryAnswer[] {
