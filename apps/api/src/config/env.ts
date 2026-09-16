@@ -14,6 +14,9 @@ const EnvSchema = z.object({
   NODE_ENV: z.string().default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default('0.0.0.0'),
+  /** Mot de passe unique (HTTP Basic) sur toute l'API sauf /api/health. Vide = aucune authentification : n'exposez pas le port. */
+  APP_AUTH_USER: optionalString,
+  APP_AUTH_PASSWORD: optionalString,
   DATABASE_PATH: z.string().default('./data/app.db'),
   LOG_LEVEL: z.string().default('info'),
   CORS_ORIGIN: optionalString,
@@ -83,7 +86,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
       heliusApiKey = undefined;
     }
   }
-  for (const k of ['SOLSCAN_API_KEY', 'HELIUS_API_KEY', 'TELEGRAM_BOT_TOKEN', 'NTFY_TOKEN', 'CRYPTOPANIC_API_KEY', 'GITHUB_TOKEN', 'X_BEARER_TOKEN', 'COINGECKO_DEMO_API_KEY', 'KRAKEN_API_KEY', 'KRAKEN_API_SECRET']) {
+  for (const k of ['SOLSCAN_API_KEY', 'HELIUS_API_KEY', 'TELEGRAM_BOT_TOKEN', 'NTFY_TOKEN', 'CRYPTOPANIC_API_KEY', 'GITHUB_TOKEN', 'X_BEARER_TOKEN', 'COINGECKO_DEMO_API_KEY', 'KRAKEN_API_KEY', 'KRAKEN_API_SECRET', 'APP_AUTH_PASSWORD']) {
     if (source[`VITE_${k}`]) {
       throw new Error(`VITE_${k} est défini : les variables VITE_* sont publiques, déplacez ce secret.`);
     }

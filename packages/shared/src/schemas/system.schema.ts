@@ -29,6 +29,8 @@ export const SourcesView = z.object({
   tierLabel: z.string(),
   sources: z.array(SourceStatus),
   capabilities: z.array(DataCapability),
+  /** Comment l'API est exposée : l'écran Système le dit, le README aussi. */
+  exposure: z.object({ host: z.string(), authEnabled: z.boolean(), corsOrigin: z.string().nullable() }),
 });
 export type SourcesView = z.infer<typeof SourcesView>;
 
