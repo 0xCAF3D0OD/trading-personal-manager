@@ -17,7 +17,7 @@ Règles :
 
 const fr = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
 const compact = new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 2 });
-const usd = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v) ? 'inconnu' : Math.abs(v) >= 1000 ? `${compact.format(v)} $` : Math.abs(v) >= 0.01 ? `${fr.format(v)} $` : `${v.toPrecision(4)} $`);
+const usd = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v) ? 'inconnu' : Math.abs(v) >= 1000 ? `${compact.format(v)} $` : Math.abs(v) >= 1 ? `${fr.format(v)} $` : `${new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 4 }).format(v)} $`);
 const pct = (v: number | null | undefined, d = 1) => (v === null || v === undefined || !Number.isFinite(v) ? 'inconnu' : `${v > 0 ? '+' : ''}${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: d }).format(v)} %`);
 const date = (ts: number | null | undefined) => (ts ? new Date(ts * 1000).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Paris' }) : 'date inconnue');
 const age = (h: number | null) => (h === null ? 'âge inconnu' : h < 48 ? `${Math.round(h)} h` : `${Math.round(h / 24)} j`);

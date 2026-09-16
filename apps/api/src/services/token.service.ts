@@ -69,12 +69,12 @@ export class TokenService {
         }
       }
       if (!info) info = { creator: null, createdAt: null, name: null, symbol: null, source: 'unavailable' };
-      // Si toujours incomplet, on ne met en cache que 24 h pour retenter plus tard.
-      if (!info.creator || !info.createdAt) {
-        this.ctx.cache.set(`creator:${address}`, info, info.source, nowS(), TTL.tokenMeta);
-      }
       return { value: info, source: info.source };
     });
+    // Si incomplet, on ne garde que 24 h pour retenter (getOrFetch aurait mis un an) : le repli « première transaction » doit pouvoir s'exécuter.
+    if (!hit.cached && (!hit.value.creator || !hit.value.createdAt)) {
+      this.ctx.cache.set(`creator:${address}`, hit.value, hit.value.source, nowS(), TTL.tokenMeta);
+    }
     return hit.value;
   }
 

@@ -1,6 +1,7 @@
 import type { HttpDeps } from '../http.js';
 import { fetchJson } from '../http.js';
 import type { PairInfo } from '../types.js';
+import { rankPairs } from '../../market/pairs.js';
 
 interface DsPair {
   chainId: string; dexId: string; url?: string; pairAddress: string;
@@ -45,8 +46,8 @@ export class DexScreenerSource {
         void err;
       }
       const candidates = list.filter((p) => p.chainId === 'solana' && p.baseToken?.address === mint);
-      candidates.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0));
-      out.set(mint, candidates.map(toPairInfo));
+      // Pools sains d'abord (par liquidité), pools au prix aberrant en queue et marqués : jamais pool principal.
+      out.set(mint, rankPairs(candidates.map(toPairInfo)));
     }
     return out;
   }
@@ -61,5 +62,6 @@ function toPairInfo(p: DsPair): PairInfo {
     fdvUsd: num(p.fdv), marketCapUsd: num(p.marketCap),
     pairCreatedAt: p.pairCreatedAt ? Math.floor(p.pairCreatedAt / 1000) : null,
     baseSymbol: p.baseToken?.symbol ?? null, baseName: p.baseToken?.name ?? null,
+    anomalous: false,
   };
 }

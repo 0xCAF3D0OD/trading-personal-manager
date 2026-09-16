@@ -10,7 +10,7 @@ function base(): SummaryInputs {
   return {
     health: { mintAuthority: null, freezeAuthority: null, extensions: [], checkedAt: now, ageDays: 120, young: false, lpLocked: true, lpLockedPct: 100, lpLockProtocol: 'raydium_locker' },
     liquidity: { ratioPct: 12.4, band: 'comfortable', mainPoolUsd: 200_000, totalRatioPct: 15.5, totalBand: 'comfortable', totalUsd: 250_000, poolsCount: 3, ts: now, source: 'dexscreener' },
-    slippage: { orderUsd: 1000, impactPct: 0.42, ts: now },
+    slippage: { orderUsd: 1000, impactPct: 0.42, receivedUsd: 995.8, method: 'jupiter_quote', ts: now },
     holders: { top10Pct: 23, holderCount: 12_500, truncated: false, ts: now, source: 'helius', fullTierMissing: null, ageDays: 120 },
     team: { creatorKnown: true, walletsCount: 1, actionsAvailable: true, sells: 0, transfersOut: 0, lpRemovals: 0, lastActionTs: null, claimsKept: 2, claimsContradicted: 0, claimsExpired: 0, claimsPending: 0 },
     divergences: { triggered: [], evaluated: 7, insufficient: 2, computedAt: now, priceChange24hPct: 2.4, priceChangeAt: now },
@@ -77,27 +77,37 @@ describe('Synthèse en cinq questions', () => {
 
   it('la sortie ne peut pas être « sans mal » quand la vente coûte 77 % : le coût réel prime sur le ratio', () => {
     const i = base();
-    i.slippage = { orderUsd: 1000, impactPct: 77.1, ts: now };
+    i.slippage = { orderUsd: 1000, impactPct: 77.1, receivedUsd: 229, method: 'jupiter_quote', ts: now };
     const e = buildSummary(i, settings)[1]!;
     expect(e.state).toBe('risk');
     expect(e.short).toBe('sortie à 77 %');
     expect(e.answer).toMatch(/^Difficilement/);
     expect(e.answer).toContain('contredit le ratio');
-    i.slippage = { orderUsd: 1000, impactPct: 4.2, ts: now };
+    i.slippage = { orderUsd: 1000, impactPct: 4.2, receivedUsd: 958, method: 'jupiter_quote', ts: now };
     expect(buildSummary(i, settings)[1]!.state).toBe('warn');
   });
 
   it('l’état de sortie est porté par le pool principal, le total est secondaire, et 0 % n’est jamais affiché', () => {
     const i = base();
     i.liquidity = { ...i.liquidity!, ratioPct: 4.8, band: 'thin', totalRatioPct: 13.4, totalBand: 'comfortable', poolsCount: 24 };
-    i.slippage = { orderUsd: 1000, impactPct: 0, ts: now };
+    i.slippage = { orderUsd: 1000, impactPct: 0, receivedUsd: 1000.45, method: 'jupiter_quote', ts: now };
     const e = buildSummary(i, settings)[1]!;
     expect(e.state).toBe('warn');
     expect(e.short).toBe('mince');
     expect(e.answer).toContain('4,8 % de la capitalisation');
     expect(e.answer).toContain('Tous pools confondus (24) : 13,4 %, mais les petits pools ne comptent pas pour une sortie');
     expect(e.answer).toContain('moins de 0,01 %');
+    expect(e.answer).toMatch(/la cotation rend 1.000 \$/); // montants arrondis à l'unité dans la synthèse
     expect(e.answer).not.toContain('0,00 %');
+  });
+
+  it('une cotation qui rend bien plus que l’ordre n’est pas une perte nulle : coût non estimable, dit comme tel', () => {
+    const i = base();
+    i.slippage = { orderUsd: 1000, impactPct: 0, receivedUsd: 1180, method: 'jupiter_quote', ts: now };
+    const e = buildSummary(i, settings)[1]!;
+    expect(e.answer).toContain('Coût de sortie non estimable à cet instant');
+    expect(e.answer).toMatch(/rendrait 1.180 \$ pour 1.000 \$/);
+    expect(e.answer).not.toContain('moins de 0,01 %');
   });
 
   it('un token de cinq jours n’est jamais « sain » tout court, et une répartition régulière y est contextualisée', () => {

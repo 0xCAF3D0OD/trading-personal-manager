@@ -58,6 +58,14 @@ Corrections du 15 septembre 2026, après une deuxième relecture par l'IA (retou
 - **Actualités** : les pages de cours (CoinGecko, CoinMarketCap, pages « price » des exchanges, explorateurs) remontées par Google News sont ignorées (`quotePageDomains`, réglable). Le dossier dit explicitement « surveillance du site et du compte X non active » quand aucune source du projet n'est déclarée.
 - **Consigne v2** : les états sont une lecture de l'outil à rapporter tels quels ; définir seulement les termes employés. **Glossaire** limité aux termes présents dans le dossier.
 
+Corrections du 16 septembre 2026, après une troisième relecture par l'IA (retour de Kevin) :
+
+- **Pool au prix aberrant.** DexScreener a renvoyé pour EMBER un pool à 80,86 $ (le vrai prix : 0,02 $) avec une « liquidité » de 27 M$ ; trié par liquidité il devenait pool principal et un relevé entier partait sur un prix faux (capitalisation 80 milliards, ratio « 0,0 % », repère de taille 271 212 $). Désormais la référence est le prix du pool qui a le plus de volume ; tout pool dont le prix s'en écarte d'un facteur 2 est marqué aberrant, exclu des totaux et jamais pool principal (`market/pairs.ts`, testé sur ce cas). Migration 0009 : les relevés dont le prix s'écarte d'un facteur 20 de la médiane du token sont supprimés.
+- **Cotation incohérente ≠ perte nulle.** Ce que la cotation Jupiter rend est conservé (`received_usd`). Si elle rend plus de 2 % de plus que l'ordre au prix de référence, la question 2 dit « coût de sortie non estimable à cet instant » avec les deux montants, jamais « moins de 0,01 % ».
+- **Décimales du prix** : quatre chiffres significatifs sous 1 $ (0,0138 $, pas 0,01 $), dans les dossiers et le connecteur.
+- **Jobs quotidiens manqués.** Quand la machine dort, node-cron ne rejoue pas les ticks passés : le relevé des détenteurs du 16/09 à 06:00 n'a pas eu lieu. Un rattrapage tourne toutes les heures (détenteurs manquants du jour, slippage et portefeuille si la dernière exécution réussie a plus de 20 h).
+- **Créateur.** Les résolutions vides étaient mises en cache pour un an (le TTL court était écrasé par `getOrFetch`) : le repli « première transaction » ne s'exécutait jamais. Corrigé, cache vidé par la migration, et un rafraîchissement forcé de la santé retente la résolution.
+
 Règles :
 
 - **La finalité est écrite** : au-dessus des cinq questions, une phrase fixe (« Personne ne peut dire si ce token vous rapportera. Ces cinq questions disent ce qui peut vous faire perdre, et chacune est vérifiable. »), et sous chaque question une ligne « à quoi ça sert » rapportée à l'argent du lecteur (`SUMMARY_PURPOSE`, partagée avec les cartes). Demandé par Kevin le 14 septembre 2026 : le visiteur doit savoir à quoi sert chaque information.

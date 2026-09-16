@@ -117,7 +117,9 @@ export class MarketService {
     const sourceIsFdv = d.pair ? sourceMcapIsFdv(sourceMcap, d.pair.fdvUsd) : false;
     const gap = mcapGapPct(sourceIsFdv ? null : sourceMcap, mcapLocal);
 
-    const pools: PoolInfo[] = d.pairs.map((p, i) => ({
+    const sanePairs = d.pairs.filter((p) => !p.anomalous);
+    const ignoredPools = d.pairs.length - sanePairs.length;
+    const pools: PoolInfo[] = sanePairs.map((p, i) => ({
       address: p.pairAddress, dexId: p.dexId, poolType: poolTypeOf(p.dexId, cfg), liquidityUsd: p.liquidityUsd, volumeH24Usd: p.volume24hUsd,
       priceUsd: p.priceUsd, url: p.url, isMain: i === 0, source: 'dexscreener',
     }));
@@ -152,7 +154,7 @@ export class MarketService {
         momentum,
         mcap: { sourceValue: sourceMcap, sourceName: d.pair ? 'dexscreener' : 'unavailable', sourceIsFdv, local: mcapLocal, fdvLocal, fdvSource: d.pair?.fdvUsd ?? null, gapPct: gap, gapWarn: gap !== null && Math.abs(gap) > cfg.mcapGapWarnPct },
         supply: sc,
-        liquidity: { mainPoolUsd: mainLiq, totalUsd: totalLiq, poolsCount: pools.length, ratioPct, band: lb.band, bandLabel: lb.label, totalRatioPct, totalBand: tlb.band, totalBandLabel: tlb.label, pools, source: d.pair ? 'dexscreener' : 'unavailable' },
+        liquidity: { mainPoolUsd: mainLiq, totalUsd: totalLiq, poolsCount: pools.length, ratioPct, band: lb.band, bandLabel: lb.label, totalRatioPct, totalBand: tlb.band, totalBandLabel: tlb.label, ignoredPools, pools, source: d.pair ? 'dexscreener' : 'unavailable' },
         volume: { h24Usd: vol, mainPoolH24Usd: mainVol, source: volSource, toMcap: volToMcap, band: vb.band, bandLabel: vb.label, ratioChange24hPct: ratioChange(86400), ratioChange7dPct: ratioChange(7 * 86400) },
         pair: d.pair ? { dexId: d.pair.dexId, pairAddress: d.pair.pairAddress, url: d.pair.url, createdAt: d.pair.pairCreatedAt } : null,
         source: usedSource,

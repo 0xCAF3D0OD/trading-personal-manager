@@ -35,6 +35,17 @@ export class Scheduler {
     }
   }
 
+  /** Rejoue un job quotidien si sa dernière exécution réussie date de plus de 20 h (ou n'existe pas). */
+  async catchUpDaily(): Promise<void> {
+    const last = new Map(this.s.ctx.jobs.all().map((r) => [r.name, r]));
+    const stale = (name: string) => { const r = last.get(name); return !r || r.last_status !== 'ok' || !r.last_run_at || nowS() - r.last_run_at > 20 * 3600; };
+    const hour = new Date().getHours();
+    // Détenteurs : idempotent, ne prend que ce qui manque aujourd'hui.
+    await this.run('holder-snapshot', (s) => runHolderSnapshot(s, { onlyMissingToday: true }));
+    if (hour >= 7 && stale('market-slippage')) await this.run('market-slippage', runMarketSlippage);
+    if (hour >= 1 && stale('portfolio-daily') && this.s.portfolio.configured) await this.run('portfolio-daily', runPortfolioDaily);
+  }
+
   start(): void {
     const env = this.s.ctx.env;
     const schedule = (name: string, expr: string, fn: JobFn) => {
@@ -62,6 +73,10 @@ export class Scheduler {
       this.s.ctx.cache.purgeExpired();
       this.s.ctx.usage.purge();
     }));
+
+    // Rattrapage des jobs quotidiens manqués : quand la machine dort, node-cron ne rejoue pas les ticks passés
+    // (relevé des détenteurs manqué le 16/09/2026 après une nuit de veille). Toutes les heures, on vérifie.
+    this.tasks.push(cron.schedule('25 * * * *', () => void this.catchUpDaily()));
 
     // Au démarrage : rattrapage sans attendre le prochain tick.
     setTimeout(() => {
