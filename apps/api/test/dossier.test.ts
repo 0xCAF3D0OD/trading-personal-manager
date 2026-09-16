@@ -62,6 +62,14 @@ describe('Dossier pour l’IA', () => {
   });
 });
 
+describe('Prix dans le dossier', () => {
+  it('garde quatre chiffres significatifs sous 1 $ : 0,0138 $, pas 0,01 $', () => {
+    const md = buildDossier(inputs({ market: { price: { primary: { value: 0.0138, source: 'dexscreener', fetchedAt: now }, secondary: null, spreadPct: null, spreadWarn: false, spreadConsecutiveOver: 0 }, priceChange: { m5: null, h1: null, h6: null, h24: -21.83 }, momentum: { state: 'none', hourlyRates: { h24: null, h6: null, h1: null, m5: null }, label: 'Sans tendance nette : —' }, mcap: { sourceValue: 13_732_995, sourceName: 'dexscreener', sourceIsFdv: false, local: 13_732_995, fdvLocal: 13_732_995, fdvSource: null, gapPct: 0, gapWarn: false }, supply: { minted: 993_450_000, incinerated: 0, net: 993_450_000, incineratorAddresses: [], source: 'rpc', fetchedAt: now }, liquidity: { mainPoolUsd: 657_705, totalUsd: 1_929_252, poolsCount: 22, ratioPct: 4.79, band: 'thin', bandLabel: 'Liquidité mince', totalRatioPct: 14.05, totalBand: 'comfortable', totalBandLabel: 'Liquidité confortable', ignoredPools: 1, pools: [], source: 'dexscreener' }, volume: { h24Usd: 3_820_000, mainPoolH24Usd: 2_817_115, source: 'dexscreener', toMcap: 0.28, band: 'low', bandLabel: 'Activité faible', ratioChange24hPct: null, ratioChange7dPct: null }, pair: null, source: 'dexscreener', fetchedAt: now } }));
+    expect(md).toContain('- Prix : 0,0138 $');
+    expect(md).not.toContain('- Prix : 0,01 $');
+  });
+});
+
 describe('Export partageable', () => {
   it('convertit le Markdown du dossier en HTML en échappant tout le texte', () => {
     const html = mdToHtml('# Titre\n\n> consigne\n\n## Section\n\n- point **fort** avec `code`\n- <script>alert(1)</script>\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\nParagraphe final.');

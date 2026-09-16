@@ -44,6 +44,7 @@ const simpleText = computed(() => {
       <span>{{ simpleText }}</span>
     </div>
     <p v-if="liq.poolsCount > 1 && liq.totalRatioPct !== null" class="small muted" style="margin:.25rem 0 0">Tous pools confondus ({{ liq.poolsCount }}) : {{ fmtPct(liq.totalRatioPct, { signed: false, digits: 1 }) }}<template v-if="liq.totalBand !== liq.band">, mais les petits pools ne comptent pas pour une sortie : la route de vente ne les traverse pas</template>.</p>
+    <p v-if="liq.ignoredPools" class="small muted" style="margin:.25rem 0 0">{{ liq.ignoredPools }} pool(s) au prix aberrant ignoré(s) : ni pool principal, ni dans les totaux.</p>
     <p v-if="liq.mainPoolUsd" class="small muted" style="margin:.25rem 0 0">Repère de taille : {{ ui.settings.orderSizeShareOfPoolPct }} % du pool principal = <strong>{{ fmtUsd(liq.mainPoolUsd * ui.settings.orderSizeShareOfPoolPct / 100) }}</strong>. Au-delà, c’est votre propre ordre qui fait le prix.</p>
     <p class="small faint purpose" style="margin:.25rem 0 0">{{ PURPOSE }}</p>
     <p class="small muted" style="margin:.4rem 0 0"><Terme mot="liquidité">Liquidité</Terme> du <Terme mot="pool">pool</Terme> principal : {{ fmtUsd(liq.mainPoolUsd, { compact: true }) }}<template v-if="liq.poolsCount > 1">, {{ liq.poolsCount }} pools au total pour {{ fmtUsd(liq.totalUsd, { compact: true }) }}</template>.</p>
@@ -54,7 +55,7 @@ const simpleText = computed(() => {
         <QueryState :loading="slippage.isLoading.value" :error="slippage.error.value" />
         <span v-if="mainSize">
           Vendre {{ fmtUsd(mainSize.orderUsd) }} coûterait
-          <strong :class="mainSize.impactPct === null ? 'faint' : mainSize.impactPct > 10 ? 'down' : mainSize.impactPct > 3 ? 'warning' : ''">{{ mainSize.impactPct === null ? 'un montant non estimable' : mainSize.impactPct < 0.01 ? 'moins de 0,01 %' : `${mainSize.impactPct.toFixed(2)} %` }}</strong>
+          <strong :class="mainSize.impactPct === null ? 'faint' : mainSize.impactPct > 10 ? 'down' : mainSize.impactPct > 3 ? 'warning' : ''">{{ mainSize.impactPct === null ? 'un montant non estimable' : mainSize.receivedUsd !== null && mainSize.receivedUsd > mainSize.orderUsd * 1.02 ? 'un montant non estimable (cotation incohérente avec le prix de référence)' : mainSize.impactPct < 0.01 ? 'moins de 0,01 %' : `${mainSize.impactPct.toFixed(2)} %` }}</strong>
           de <Terme mot="slippage">slippage</Terme><template v-if="mainSize.receivedUsd !== null"> : vous recevriez {{ fmtUsd(mainSize.receivedUsd) }}, frais inclus</template> <span class="faint small">({{ mainSize.method === 'jupiter_quote' ? 'simulation Jupiter' : mainSize.method === 'constant_product' ? 'formule x·y = k' : 'indisponible' }} · {{ timeAgo(mainSize.fetchedAt) }})</span>
         </span>
       </template>

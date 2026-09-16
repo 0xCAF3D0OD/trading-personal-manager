@@ -29,6 +29,8 @@ export class HealthService {
     if (force) {
       this.ctx.cache.invalidate(`rpc:mint:${token.address}`);
       this.ctx.cache.invalidate(`rugcheck:${token.address}`);
+      // Le créateur aussi : un rafraîchissement forcé doit retenter la résolution, pas relire un « inconnu » en cache.
+      if (!token.creator_address || !token.created_at) this.ctx.cache.invalidate(`creator:${token.address}`);
     }
     const mint = (await this.tokens.getMintInfo(token.address)).value;
     let lp: LpLockInfo = { locked: null, lockedPct: null, protocol: null, source: 'unavailable', detail: null };

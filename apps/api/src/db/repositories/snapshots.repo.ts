@@ -100,13 +100,13 @@ export class SnapshotsRepo {
     return (this.db.prepare('SELECT * FROM market_snapshots WHERE token_id = ? ORDER BY ts DESC LIMIT ?').all(tokenId, n) as unknown as MarketRow[]).map(toMarket);
   }
 
-  insertSlippage(rows: { tokenId: number; ts: number; orderUsd: number; impactPct: number | null; method: string; route: string[]; poolAddress: string | null }[]): void {
-    const stmt = this.db.prepare(`INSERT OR IGNORE INTO slippage_snapshots (token_id, ts, order_usd, side, impact_pct, method, route, pool_address) VALUES (?, ?, ?, 'sell', ?, ?, ?, ?)`);
-    for (const r of rows) stmt.run(r.tokenId, r.ts, r.orderUsd, r.impactPct, r.method, JSON.stringify(r.route), r.poolAddress);
+  insertSlippage(rows: { tokenId: number; ts: number; orderUsd: number; impactPct: number | null; receivedUsd?: number | null; method: string; route: string[]; poolAddress: string | null }[]): void {
+    const stmt = this.db.prepare(`INSERT OR IGNORE INTO slippage_snapshots (token_id, ts, order_usd, side, impact_pct, received_usd, method, route, pool_address) VALUES (?, ?, ?, 'sell', ?, ?, ?, ?, ?)`);
+    for (const r of rows) stmt.run(r.tokenId, r.ts, r.orderUsd, r.impactPct, r.receivedUsd ?? null, r.method, JSON.stringify(r.route), r.poolAddress);
   }
 
-  slippageHistory(tokenId: number, sinceTs: number): { ts: number; orderUsd: number; impactPct: number | null; method: string }[] {
-    return (this.db.prepare('SELECT ts, order_usd AS orderUsd, impact_pct AS impactPct, method FROM slippage_snapshots WHERE token_id = ? AND ts >= ? ORDER BY ts ASC').all(tokenId, sinceTs) as unknown as { ts: number; orderUsd: number; impactPct: number | null; method: string }[]);
+  slippageHistory(tokenId: number, sinceTs: number): { ts: number; orderUsd: number; impactPct: number | null; receivedUsd: number | null; method: string }[] {
+    return (this.db.prepare('SELECT ts, order_usd AS orderUsd, impact_pct AS impactPct, received_usd AS receivedUsd, method FROM slippage_snapshots WHERE token_id = ? AND ts >= ? ORDER BY ts ASC').all(tokenId, sinceTs) as unknown as { ts: number; orderUsd: number; impactPct: number | null; receivedUsd: number | null; method: string }[]);
   }
 
   latestMarket(tokenId: number): MarketSnapshot | null {

@@ -30,7 +30,7 @@ async function getText(path: string): Promise<string> {
 }
 const text = (t: string) => ({ content: [{ type: 'text' as const, text: t }] });
 const date = (ts: number) => new Date(ts * 1000).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-const usd = (v: number | null) => (v === null || !Number.isFinite(v) ? 'inconnu' : Math.abs(v) >= 1000 ? `${new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 2 }).format(v)} $` : Math.abs(v) >= 0.01 ? `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 4 }).format(v)} $` : v === 0 ? '0 $' : `${v.toPrecision(4)} $`);
+const usd = (v: number | null) => (v === null || !Number.isFinite(v) ? 'inconnu' : Math.abs(v) >= 1000 ? `${new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 2 }).format(v)} $` : Math.abs(v) >= 1 ? `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(v)} $` : v === 0 ? '0 $' : `${new Intl.NumberFormat('fr-FR', { maximumSignificantDigits: 4 }).format(v)} $`);
 const pct = (v: number | null) => (v === null ? 'inconnu' : `${v > 0 ? '+' : ''}${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(v)} %`);
 
 async function resolveToken(query: string): Promise<TokenItem> {

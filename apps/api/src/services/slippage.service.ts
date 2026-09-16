@@ -81,7 +81,7 @@ export class SlippageService {
     for (const t of this.ctx.tokens.listActive()) {
       try {
         const r = await this.estimate(t.id);
-        this.ctx.snapshots.insertSlippage(r.sizes.map((s) => ({ tokenId: t.id, ts, orderUsd: s.orderUsd, impactPct: s.impactPct, method: s.method, route: s.route, poolAddress: null })));
+        this.ctx.snapshots.insertSlippage(r.sizes.map((s) => ({ tokenId: t.id, ts, orderUsd: s.orderUsd, impactPct: s.impactPct, receivedUsd: s.receivedUsd, method: s.method, route: s.route, poolAddress: null })));
         n += r.sizes.length;
       } catch (err) {
         this.ctx.log.warn({ err: (err as Error).message, token: t.address }, 'Snapshot slippage échoué');

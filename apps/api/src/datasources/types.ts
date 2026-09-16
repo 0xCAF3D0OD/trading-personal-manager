@@ -51,6 +51,8 @@ export interface PairInfo {
   pairCreatedAt: number | null;
   baseSymbol: string | null;
   baseName: string | null;
+  /** Prix incohérent avec les autres pools du token : exclu des totaux, jamais pool principal. */
+  anomalous: boolean;
 }
 
 export interface CreatorInfo {

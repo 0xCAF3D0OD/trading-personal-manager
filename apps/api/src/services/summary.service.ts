@@ -59,7 +59,7 @@ export class SummaryService {
     const inputs: SummaryInputs = {
       health: h ? { mintAuthority: h.mint_authority, freezeAuthority: h.freeze_authority, extensions, checkedAt: h.checked_at, ageDays, young: ageDays !== null && ageDays < 7, lpLocked: h.lp_locked === null ? null : h.lp_locked === 1, lpLockedPct: h.lp_locked_pct, lpLockProtocol: h.lp_lock_protocol } : null,
       liquidity: m ? { ratioPct: ratio, band: band.band, mainPoolUsd: m.liquidityUsd, totalRatioPct: totalRatio, totalBand: totalBand.band, totalUsd: liqAll, poolsCount: m.poolsCount ?? (m.liquidityUsd !== null ? 1 : 0), ts: m.ts, source: m.liquiditySource ?? m.priceSource } : null,
-      slippage: slip ? { orderUsd: slip.orderUsd, impactPct: slip.impactPct, ts: slip.ts } : null,
+      slippage: slip ? { orderUsd: slip.orderUsd, impactPct: slip.impactPct, receivedUsd: slip.receivedUsd, method: slip.method, ts: slip.ts } : null,
       holders: latestHolders ? { top10Pct: latestHolders.top10Pct, holderCount: latestHolders.holderCount, truncated: latestHolders.truncated, ts: latestHolders.ts, source: latestHolders.source, fullTierMissing, ageDays } : null,
       team: {
         creatorKnown: creatorKnown || wallets.some((w) => w.label === 'creator'), walletsCount: wallets.length,

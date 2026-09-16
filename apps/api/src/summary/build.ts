@@ -9,7 +9,7 @@ import { SUMMARY_PURPOSE } from '@tpm/shared';
 export interface SummaryInputs {
   health: { mintAuthority: string | null; freezeAuthority: string | null; extensions: string[]; checkedAt: number; ageDays: number | null; young: boolean; lpLocked: boolean | null; lpLockedPct: number | null; lpLockProtocol: string | null } | null;
   liquidity: { ratioPct: number | null; band: LiquidityBand | null; mainPoolUsd: number | null; totalRatioPct: number | null; totalBand: LiquidityBand | null; totalUsd: number | null; poolsCount: number; ts: number; source: SourceName } | null;
-  slippage: { orderUsd: number; impactPct: number | null; ts: number } | null;
+  slippage: { orderUsd: number; impactPct: number | null; receivedUsd: number | null; method: string; ts: number } | null;
   holders: { top10Pct: number | null; holderCount: number | null; truncated: boolean; ts: number; source: SourceName; fullTierMissing: string | null; ageDays: number | null } | null;
   team: {
     creatorKnown: boolean; walletsCount: number; actionsAvailable: boolean; sells: number; transfersOut: number; lpRemovals: number;
@@ -56,11 +56,14 @@ function exit(i: SummaryInputs, s: SummarySettings): SummaryAnswer {
   if (!l || l.ratioPct === null || !l.band) {
     return { ...base, state: 'unknown', source: l?.source ?? 'unavailable', fetchedAt: l?.ts ?? null, short: 'inconnu', answer: 'Inconnu : aucun relevé de liquidité rapporté à la capitalisation.' };
   }
-  const slipPct = i.slippage?.impactPct ?? null;
-  // Jamais « 0,0 % » : le slippage n'est jamais exactement nul, seulement en dessous de ce que la cotation laisse voir.
-  const slip = slipPct !== null
-    ? ` Vendre ${usd(i.slippage!.orderUsd)} coûterait ${slipPct < 0.01 ? 'moins de 0,01 % (la cotation rend au moins le prix de référence)' : pct(slipPct, 2)}${slipPct >= SLIPPAGE_RISK_PCT ? ' : c’est le coût réel de la sortie, et il contredit le ratio' : ''}.`
-    : ` Coût d’une vente de ${usd(s.summarySlippageOrderUsd)} non estimé : cliquez sur Estimer.`;
+  // Une cotation qui rend nettement plus que l'ordre au prix de référence n'est pas une « perte nulle » : les deux prix ne concordent pas.
+  const inconsistentQuote = !!i.slippage && i.slippage.receivedUsd !== null && i.slippage.receivedUsd > i.slippage.orderUsd * 1.02;
+  const slipPct = inconsistentQuote ? null : i.slippage?.impactPct ?? null;
+  const slip = inconsistentQuote
+    ? ` Coût de sortie non estimable à cet instant : la cotation Jupiter rendrait ${usd(i.slippage!.receivedUsd!)} pour ${usd(i.slippage!.orderUsd)} au prix de référence, les deux prix ne concordent pas (référence en retard ou route incohérente).`
+    : slipPct !== null
+      ? ` Vendre ${usd(i.slippage!.orderUsd)} coûterait ${slipPct < 0.01 ? `moins de 0,01 %${i.slippage!.receivedUsd !== null ? ` (la cotation rend ${usd(i.slippage!.receivedUsd)})` : ''}` : pct(slipPct, 2)}${slipPct >= SLIPPAGE_RISK_PCT ? ' : c’est le coût réel de la sortie, et il contredit le ratio' : ''}.`
+      : ` Coût d’une vente de ${usd(s.summarySlippageOrderUsd)} non estimé : cliquez sur Estimer.`;
   const marker = l.mainPoolUsd !== null && l.mainPoolUsd > 0 ? ` Repère de taille : ${s.orderSizeShareOfPoolPct} % du pool principal = ${usd(l.mainPoolUsd * s.orderSizeShareOfPoolPct / 100)} ; au-delà, c’est votre propre ordre qui fait le prix.` : '';
   const lock = i.health?.lpLocked === true
     ? ` Liquidité verrouillée${i.health.lpLockedPct !== null ? ` à ${pct(i.health.lpLockedPct, 0)}` : ''}${i.health.lpLockProtocol ? ` (${i.health.lpLockProtocol})` : ''}, date de déverrouillage inconnue.`

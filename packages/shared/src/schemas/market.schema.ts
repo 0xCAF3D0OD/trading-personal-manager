@@ -91,6 +91,8 @@ export const MarketMetricsView = z.object({
     totalRatioPct: z.number().nullable(),
     totalBand: LiquidityBand.nullable(),
     totalBandLabel: z.string().nullable(),
+    /** Pools au prix aberrant, exclus des totaux et jamais pool principal. */
+    ignoredPools: z.number(),
     pools: z.array(PoolInfo),
     source: SourceName,
   }),
