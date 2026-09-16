@@ -9,6 +9,8 @@ function inputs(over: Partial<DossierInputs> = {}): DossierInputs {
   return {
     token: { symbol: 'EMBER', name: 'Embercurve', address: '5dvXTZ5qwgafnHtwu3Ls3QrWx1U4LQsFeCuJgkk4QEC6', program: 'spl-token', decimals: 6, createdAt: now - 90 * 86400, creatorAddress: null, addedAt: now - 3 * 86400 },
     tier: 'B',
+    jobs: [{ name: 'holder-snapshot', label: 'Relevé des détenteurs (quotidien)', lastRunAt: now - 37 * 3600, status: 'ok', error: null }],
+    degraded: [],
     summary: {
       tokenId: 1, computedAt: now,
       answers: [
@@ -39,6 +41,8 @@ describe('Dossier pour l’IA', () => {
     expect(md).not.toContain('**produit constant**');
     expect(Object.keys(GLOSSARY).length).toBeGreaterThan(20);
     expect(md).toContain('Surveillance du site et du compte X non active');
+    expect(md).toContain('Relevé des détenteurs (quotidien) :');
+    expect(md).toContain('(il y a 37 h)');
     expect(md).toContain('aucune n\'est une recommandation');
   });
 

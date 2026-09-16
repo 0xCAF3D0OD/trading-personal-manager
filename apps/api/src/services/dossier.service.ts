@@ -20,6 +20,13 @@ import type { NewsService } from './watch/news.service.js';
 import type { OnchainWatchService } from './watch/onchain.service.js';
 import type { WatchPageService } from './watch/page.service.js';
 
+/** Tâches planifiées, dans l'ordre où elles comptent pour lire un dossier. */
+const JOB_LABELS: [string, string][] = [
+  ['market-snapshot', 'Relevé de marché (15 min)'], ['holder-snapshot', 'Relevé des détenteurs (quotidien)'], ['market-slippage', 'Relevé de slippage (quotidien)'],
+  ['alert-eval', 'Évaluation des alertes (1 min)'], ['watch-pages', 'Veille : pages'], ['watch-news', 'Veille : actualités'], ['watch-onchain', 'Veille : on-chain équipe'],
+  ['watch-review', 'Veille : engagements et changements'], ['scan-discover', 'Scanner : découverte'], ['scan-evaluate', 'Scanner : évaluation'], ['portfolio-daily', 'Portefeuille : relevé quotidien'],
+];
+
 /** Assemble le dossier (docs/05, B.2) à partir des mêmes services que la fiche : mêmes caches, mêmes limites. */
 export class DossierService {
   constructor(
@@ -76,9 +83,12 @@ export class DossierService {
       soft('créateur', async () => (await this.s.creator.get(tokenId)).value),
     ]);
 
+    const jobs = new Map(this.ctx.jobs.all().map((r) => [r.name, r]));
     const inputs: DossierInputs = {
       token: { symbol: token.symbol, name: token.name, address: token.address, program: token.program, decimals: token.decimals, createdAt: token.created_at, creatorAddress: token.creator_address, addedAt: token.added_at },
       tier: this.ctx.sources.tier,
+      jobs: JOB_LABELS.map(([name, label]) => { const r = jobs.get(name); return { name, label, lastRunAt: r?.last_run_at ?? null, status: r?.last_status ?? null, error: r?.last_error ?? null }; }),
+      degraded: this.ctx.sources.health.degradedList().map((d) => ({ provider: String(d.provider), reason: d.reason, since: d.since ?? 0 })),
       summary: this.s.summary.get(tokenId),
       health, market, supply,
       holders: this.s.holders.getView(tokenId),

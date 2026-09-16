@@ -136,10 +136,10 @@ Avec Docker, l'adresse est `http://localhost:8080/api` ; en développement, `htt
 
 ### Ce qui a été volontairement laissé de côté
 
-- Pas de bouton d'achat ou de vente, pas de connexion à votre plateforme d'échange : l'application observe, elle n'agit pas.
+- Pas de bouton d'achat ou de vente. La seule connexion à une plateforme d'échange, Kraken, est en lecture seule : l'application observe, elle n'agit pas.
 - Pas de note de risque globale : un chiffre unique donnerait une fausse impression de certitude.
 - Pas d'indicateurs de trading classiques (RSI, moyennes mobiles) : sur des tokens de quelques jours ou semaines, ils ne veulent rien dire et poussent à réagir au bruit.
-- Le suivi de la valeur de votre portefeuille sur votre plateforme d'échange est prévu pour une version ultérieure, en lecture seule. Voir la section Versions.
+- Pas d'appel à une API d'IA payante côté serveur : le dossier se copie, ou Claude Desktop le lit via le connecteur, sous votre abonnement.
 
 ### Pour démarrer en cinq minutes
 
@@ -158,20 +158,20 @@ Les premiers signaux de divergence apparaissent après deux ou trois jours de re
 | Version | État | Contenu |
 |---|---|---|
 | **0.1.0 — Surveillance** | Livrée le 13 septembre 2026 | Liste de surveillance, vue détaillée en quatre blocs, détection de divergences, journal de discipline immuable, alertes ntfy / Telegram / Discord, vue Système, sources gratuites en priorité avec Solscan en repli, Docker. Cadrage : [docs/01](docs/01-architecture-proposee.md), [docs/02](docs/02-matrice-des-sources.md). |
-| **0.4.0 — Scanner** | Livrée le 14 septembre 2026, avec les propositions par défaut du cadrage | Découverte des nouveaux pools Solana via GeckoTerminal, pipeline de filtrage en cinq étages, drapeaux explicites, onglet des exclus avec motif, réglages éditables, suivi rétrospectif J+1 / J+7 / J+30 avec médiane, alerte rare « zéro drapeau ». Cadrage : [docs/03](docs/03-scanner-schema-et-pipeline.md). |
 | **0.3.0 — Veille sur les annonces** | Livrée le 13 septembre 2026 | Panneau de métriques affiné (écart entre sources, état de dérivée, capitalisation source / recalculée / FDV, ratio liquidité / capitalisation avec slippage estimé, volume par source, trois divergences de plus, alerte retrait de liquidité) et encadré de veille (snapshots du site avec diff automatique, journal d'engagements en texte brut, frise « dire vs faire », actualités tierces séparées et signaux de promotion). Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md). |
 | **0.3.1 — Panneau de métriques de marché** | Livrée le 14 septembre 2026 | État de dérivée (extinction / accélération) sur les fenêtres 6 h, 1 h, 5 min ; écart entre sources avec alerte sur trois relevés ; capitalisation en trois lectures (source, recalculée, FDV) avec écart et détection de substitution ; offre émise nette des burns avec composants séparés ; ratio liquidité / capitalisation avec bandes, liste des pools, slippage estimé par cotation Jupiter ; volume avec source et bandes ; courbes groupées par source ; alerte de retrait de liquidité avec exclusion des migrations ; trois divergences de plus ; réglages versionnés. Cadrage : [docs/04](docs/04-metriques-marche-et-veille.md), partie A. |
+| **0.4.0 — Scanner** | Livrée le 14 septembre 2026, avec les propositions par défaut du cadrage | Découverte des nouveaux pools Solana via GeckoTerminal, pipeline de filtrage en cinq étages, drapeaux explicites, onglet des exclus avec motif, réglages éditables, suivi rétrospectif J+1 / J+7 / J+30 avec médiane, alerte rare « zéro drapeau ». Cadrage : [docs/03](docs/03-scanner-schema-et-pipeline.md). |
 | **0.4.1 — Lecture simple** | Livrée le 14 septembre 2026, avec les propositions par défaut du cadrage | Deux niveaux de lecture (simple par défaut, détail à la demande, globalement ou carte par carte) ; synthèse en cinq questions en tête de fiche, en phrases fixes, sans note ni total ; vocabulaire expliqué au survol ; cartes rangées dans l'ordre des questions ; liste de surveillance et scanner allégés ; colonne « Où l'acheter » dans le scanner (DEX par pool, plateformes centralisées via la fiche CoinGecko) ; réglages d'affichage versionnés. Cadrage : [docs/05](docs/05-lecture-simple-et-acces-ia.md), partie A. |
 | **0.4.2 — Accès pour l'IA** | Livrée le 14 septembre 2026 | Dossier complet d'un token en Markdown, daté et sourcé, avec la consigne de rédaction en tête (à copier dans n'importe quelle IA) ; connecteur MCP local pour l'application de bureau Claude (abonnement, sans clé, quatre outils en lecture seule) ; rapports collés conservés, figés, reliés à l'empreinte du dossier ; filtres « récent » et « forte évolution » sur la liste et le scanner. L'appel API côté serveur reste en option, non livré. Cadrage : [docs/05](docs/05-lecture-simple-et-acces-ia.md), partie B. |
-| **0.5.0 — Portefeuille** | Livrée le 14 septembre 2026, avec les propositions par défaut du cadrage | Soldes Kraken en lecture seule (clé « Query Funds » seule, un seul endpoint appelé, liste blanche testée), valorisation avec deux prix jamais moyennés (Kraken et on-chain), euro par défaut, un relevé conservé par jour, correspondances actif ↔ token déclarées à la main, le plan du journal face au compte, mode discret, alerte optionnelle sur la variation journalière, montants exclus des dossiers IA. Cadrage : [docs/06](docs/06-portefeuille-kraken.md). | Valeur du portefeuille Kraken en lecture seule (permission de consultation des soldes uniquement), avec la source de chaque prix. Aucune route d'ordre. |
+| **0.5.0 — Portefeuille** | Livrée le 14 septembre 2026, avec les propositions par défaut du cadrage | Soldes Kraken en lecture seule (clé « Query Funds » seule, un seul endpoint appelé, liste blanche testée), valorisation avec deux prix jamais moyennés (Kraken et on-chain), euro par défaut, un relevé conservé par jour, correspondances actif ↔ token déclarées à la main, le plan du journal face au compte, mode discret, alerte optionnelle sur la variation journalière, montants exclus des dossiers IA. Cadrage : [docs/06](docs/06-portefeuille-kraken.md). |
 | Non planifié | — | Web Push (ntfy couvre le besoin), indicateurs techniques (exclus par principe), multi-utilisateurs (hors périmètre). |
 
 ### Ce que chaque version a tranché
 
 - **0.1.0** : Fastify plutôt que Hono ; deux tables de snapshots (marché toutes les 15 minutes, détenteurs une fois par jour) plutôt qu'une ; Helius gratuit comme palier recommandé ; ntfy comme premier canal ; npm workspaces et `node:sqlite` pour éviter toute compilation native.
-- **0.2.0 → livrée en 0.4.0** avec les propositions par défaut, faute d'avis contraire : GeckoTerminal public en voie principale et clé démo CoinGecko en secours (le plan démo est plafonné à 10 000 appels par mois, insuffisant pour la découverte) ; conservation des exclusions d'étage 2 limitée aux cas proches ; trois drapeaux supplémentaires à coût nul ; alerte zéro drapeau conditionnée à la vérification du créateur ; cadence des paliers de re-vérification ; formule de décélération.
+- **0.4.0** (cadrée sous le numéro provisoire 0.2.0 dans docs/03, livrée après la veille) : propositions par défaut acceptées faute d'avis contraire : GeckoTerminal public en voie principale et clé démo CoinGecko en secours (le plan démo est plafonné à 10 000 appels par mois, insuffisant pour la découverte) ; conservation des exclusions d'étage 2 limitée aux cas proches ; trois drapeaux supplémentaires à coût nul ; alerte zéro drapeau conditionnée à la vérification du créateur ; cadence des paliers de re-vérification ; formule de décélération.
 - **0.3.0 et 0.3.1** : tranché le 13 septembre 2026 : slippage réel via Jupiter Quote avec cache 60 s et repli limité aux pools à produit constant ; « offre émise nette des burns » avec composants séparés, jamais « offre en circulation » ; sites rendus côté client couverts dès la v1 par trois modes (HTML, API JSON découverte, rendu sans tête dans un conteneur séparé) ; sévérité d'un changement selon sa nature, « non annoncé » comme drapeau additionnel à 48 h ; réglages communs aux trois modules avec défauts versionnés et remise à zéro par module ; Discord et Telegram reportés en entrée seulement, Telegram reste le canal de notification. Encore ouverts : tolérance de l'état de dérivée, X via oEmbed et saisie manuelle, sources d'actualités, wallets équipe.
-- **0.5.0** : Kraken reporté volontairement pour livrer d'abord l'observation on-chain, qui est le cœur de l'outil.
+- **0.5.0** : Kraken livré en dernier, après l'observation on-chain qui est le cœur de l'outil, et en lecture seule par construction : une seule permission, un seul endpoint, liste blanche testée.
 
 ---
 
@@ -250,7 +250,7 @@ La réponse indique le palier détecté (A, B ou C) et, pour chaque donnée, la 
 npm test
 ```
 
-Cent six tests : source Kraken (signature contre le vecteur public, liste blanche, codes), valorisation du portefeuille et plan face au compte, dossier pour l'IA (consigne en tête, cinq questions et finalités, plan exclu par défaut, aucune clé, sections vides dites telles quelles), synthèse en cinq questions (gabarits, inconnu et partiel, bascules d'état), plateformes d'échange du scanner, base58 et adresse nulle, immuabilité des plans et des engagements, sept règles de divergence, moteur de diff (normalisation, appariement, lignes volatiles, robots.txt, JSON), pipeline de veille complet sur un site local, vérification automatique des engagements, réglages versionnés, métriques de marché (état de dérivée, écart de prix, capitalisation, bandes, slippage, retrait de liquidité et migrations, intégrité des courbes), pipeline du scanner avec jeux de données figés (normalisation, cinq étages, tri, paliers, rétrospective).
+Cent dix-neuf tests : cohérence interne du dossier produit (la synthèse et le corps citent les mêmes chiffres, le repère de taille vaut un centième du pool, le prix garde ses chiffres, jamais un pourcentage nul), classement des pools (pool au prix aberrant écarté), source Kraken (signature contre le vecteur public, liste blanche, codes), valorisation du portefeuille et plan face au compte, dossier pour l'IA (consigne en tête, cinq questions et finalités, plan exclu par défaut, aucune clé, sections vides dites telles quelles), synthèse en cinq questions (gabarits, inconnu et partiel, bascules d'état), plateformes d'échange du scanner, base58 et adresse nulle, immuabilité des plans et des engagements, sept règles de divergence, moteur de diff (normalisation, appariement, lignes volatiles, robots.txt, JSON), pipeline de veille complet sur un site local, vérification automatique des engagements, réglages versionnés, métriques de marché (état de dérivée, écart de prix, capitalisation, bandes, slippage, retrait de liquidité et migrations, intégrité des courbes), pipeline du scanner avec jeux de données figés (normalisation, cinq étages, tri, paliers, rétrospective).
 
 ---
 
@@ -281,6 +281,7 @@ Cent six tests : source Kraken (signature contre le vecteur public, liste blanch
 | `GECKOTERMINAL_BASE_URL` | API publique | Voie principale du scanner, sans clé |
 | `COINGECKO_DEMO_API_KEY` | vide | Optionnel, voie de secours du scanner quand la voie publique est limitée. 10 000 crédits par mois. |
 | `KRAKEN_API_KEY`, `KRAKEN_API_SECRET` | vides | Optionnel, module Portefeuille (0.5.0). Clé dédiée avec la permission « Query Funds » **seule** et une date d'expiration. Le code n'appelle que l'endpoint des soldes. |
+| `APP_AUTH_USER`, `APP_AUTH_PASSWORD` | vides | Optionnel, un seul compte HTTP Basic sur toute l'API sauf la santé. Voir « Sécurité et exposition ». |
 | `TPM_API_URL` (connecteur MCP seulement) | `http://localhost:3000/api` | Adresse de l'API lue par le connecteur Claude Desktop ; `http://localhost:8080/api` avec Docker |
 | `CRON_MARKET_SNAPSHOT` | `*/15 * * * *` | Prix, volume, offre (sources gratuites) |
 | `CRON_HOLDER_SNAPSHOT` | `0 6 * * *` | Détenteurs et concentration, une fois par jour |
@@ -337,10 +338,23 @@ data              Volume SQLite (gitignoré)
 
 ---
 
+## Sécurité et exposition
+
+L'application est conçue pour tourner sur votre machine et n'être ouverte que depuis elle. Trois faits à connaître :
+
+- Le backend écoute sur `0.0.0.0` à l'intérieur du conteneur, et seul le serveur web (port 8080) est publié par Docker. L'API n'est pas accessible directement de l'extérieur du réseau Docker.
+- Par défaut, **aucune authentification** : quiconque atteint le port 8080 lit tout, y compris vos soldes Kraken. La page Système l'affiche en bandeau tant que c'est le cas.
+- Pour un accès distant (VPN, reverse proxy, réseau partagé), renseignez `APP_AUTH_USER` et `APP_AUTH_PASSWORD` dans le `.env` : un seul compte, en HTTP Basic, protège toute l'API sauf `/api/health`. Le navigateur demande le mot de passe une fois. Le connecteur Claude Desktop lit alors `TPM_API_BASIC_AUTH=utilisateur:motdepasse`. Et mettez un vrai HTTPS devant : Basic sans TLS, c'est un mot de passe en clair.
+
+Le backend refuse de démarrer si un secret apparaît en `VITE_*`, et il n'existe aucune route d'écriture vers Kraken, aucune route d'ordre, aucun bouton d'achat.
+
 ## Limites connues
 
 - La date de création est obtenue en remontant les signatures de la PDA de métadonnées (gratuit). Pour un token très ancien et très actif, elle peut rester inconnue sans Solscan.
 - RugCheck est une heuristique tierce pour le verrouillage de liquidité : l'information est étiquetée comme telle.
 - Les divergences nécessitent au moins deux snapshots quotidiens espacés de 2 jours : rien n'est calculable le premier jour, et c'est voulu.
 - Web Push n'est pas implémenté ; ntfy couvre le besoin sans service worker ni clés VAPID.
-- Le suivi du portefeuille Kraken (lecture seule) est prévu en v2.
+- Le portefeuille Kraken est en lecture seule et ne peut pas l'être moins : une seule permission, un seul endpoint. Le prix d'entrée réel n'est pas lu (pas de permission « Ledger ») ; celui du plan du journal sert de référence.
+- Quand la machine dort, les tâches planifiées ne tournent pas ; un rattrapage horaire rejoue les tâches quotidiennes au réveil, mais les relevés de marché des heures manquées n'existent pas.
+- Sans mot de passe configuré, l'API est faite pour une seule machine : voir « Sécurité et exposition ».
+- Le créateur d'un token de launchpad est retrouvé par la première transaction du mint ; sur un token très actif, elle peut être hors budget de pages et le créateur reste « inconnu » plutôt qu'inventé.

@@ -4,6 +4,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import type { Env } from './config/env.js';
 import type { Db } from './db/client.js';
 import { Scheduler } from './jobs/scheduler.js';
+import { timingSafeEqual } from 'node:crypto';
 import { registerErrorHandler } from './plugins/error-handler.js';
 import { alertsRoutes } from './routes/alerts.routes.js';
 import { plansRoutes } from './routes/plans.routes.js';
@@ -45,6 +46,21 @@ export async function buildApp(env: Env, db: Db, opts: { logger?: boolean | obje
     }),
   });
   registerErrorHandler(app);
+
+  // Authentification basique optionnelle (README, « Sécurité et exposition ») : un seul compte, sur tout /api sauf la santé.
+  if (env.APP_AUTH_USER && env.APP_AUTH_PASSWORD) {
+    const expected = Buffer.from(`${env.APP_AUTH_USER}:${env.APP_AUTH_PASSWORD}`);
+    app.addHook('onRequest', async (req, reply) => {
+      if (req.url === '/api/health' || req.url.startsWith('/api/health?')) return;
+      const header = req.headers.authorization ?? '';
+      const given = header.startsWith('Basic ') ? Buffer.from(header.slice(6), 'base64') : Buffer.alloc(0);
+      const ok = given.length === expected.length && timingSafeEqual(given, expected);
+      if (!ok) {
+        reply.header('WWW-Authenticate', 'Basic realm="trading-personal-manager", charset="UTF-8"');
+        return reply.code(401).send({ error: 'Authentification requise', code: 'unauthorized' });
+      }
+    });
+  }
 
   /** Config de route pour tout ce qui peut déclencher un appel externe coûteux. */
   const expensive = { config: { rateLimit: { max: env.RATE_LIMIT_EXPENSIVE_MAX, timeWindow: '1 minute' } } };

@@ -10,6 +10,9 @@ import { AI_REPORT_PROMPT, AI_REPORT_PROMPT_VERSION, GLOSSARY } from '@tpm/share
 export interface DossierInputs {
   token: { symbol: string | null; name: string | null; address: string; program: string; decimals: number; createdAt: number | null; creatorAddress: string | null; addedAt: number };
   tier: string;
+  /** Dernier passage de chaque tâche planifiée : ce que l'écran Système sait, le dossier doit le dire aussi. */
+  jobs: { name: string; label: string; lastRunAt: number | null; status: string | null; error: string | null }[];
+  degraded: { provider: string; reason: string; since: number }[];
   summary: TokenSummary;
   health: TokenHealth | null;
   market: MarketMetricsView | null;
@@ -52,6 +55,14 @@ export function buildDossier(i: DossierInputs): string {
     `- Création du token : ${date(t.createdAt)} · Suivi depuis : ${date(t.addedAt)}`,
     `- Créateur : ${t.creatorAddress ? `\`${t.creatorAddress}\`` : 'non identifiable dans les métadonnées'}`,
     `- Palier de sources actif : ${i.tier} (A : RPC public ; B : Helius ; C : Solscan)`, '');
+
+  L.push('### État de l’outil au moment du dossier', '', 'Dernier passage de chaque tâche. Une tâche quotidienne dont le dernier passage réussi a plus de 24 h explique à elle seule un relevé ancien ou une divergence « non calculable ».', '');
+  for (const j of i.jobs) {
+    const ageH = j.lastRunAt ? Math.round((i.generatedAt - j.lastRunAt) / 3600) : null;
+    L.push(`- ${j.label} : ${j.lastRunAt ? `${date(j.lastRunAt)} (il y a ${ageH} h)` : 'jamais exécutée'}${j.status && j.status !== 'ok' ? ` · dernier état : ${j.status}${j.error ? ` (${j.error.slice(0, 120)})` : ''}` : ''}`);
+  }
+  if (i.degraded.length) L.push(`- Sources dégradées : ${i.degraded.map((d) => `${d.provider} (${d.reason}${d.since ? `, depuis ${date(d.since)}` : ''})`).join(' ; ')}`);
+  L.push('');
 
   L.push('## 2. Les cinq questions', '', 'Personne ne peut dire si ce token rapportera. Ces cinq questions disent ce qui peut faire perdre, et chacune est vérifiable.', '',
     'Les états (ok, warn, risk, partial, unknown) sont posés par l’outil, question par question, à partir de seuils réglables et affichés ; il n’existe pas de total et l’IA ne doit pas en produire. Chaque réponse porte la date de son relevé : elles ne forment pas un instantané.', '');

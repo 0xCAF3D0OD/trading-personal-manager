@@ -4,13 +4,15 @@
  * Lecture seule : quatre outils qui interrogent l'API locale de la plateforme. Aucune clé, aucun secret :
  * c'est l'abonnement Claude de l'utilisateur qui lit le dossier et écrit le rapport.
  *
- * Variables : TPM_API_URL (défaut http://localhost:3000/api ; avec Docker, http://localhost:8080/api).
+ * Variables : TPM_API_URL (défaut http://localhost:3000/api ; avec Docker, http://localhost:8080/api),
+ * TPM_API_BASIC_AUTH (« utilisateur:motdepasse », si l'API est protégée par APP_AUTH_USER / APP_AUTH_PASSWORD).
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
 const API = (process.env.TPM_API_URL ?? 'http://localhost:3000/api').replace(/\/$/, '');
+const AUTH: Record<string, string> = process.env.TPM_API_BASIC_AUTH ? { Authorization: `Basic ${Buffer.from(process.env.TPM_API_BASIC_AUTH).toString('base64')}` } : {};
 
 interface Envelope<T> { data: T; meta?: { degraded?: { provider: string; reason: string }[] } }
 interface TokenItem { id: number; symbol: string | null; name: string | null; address: string; priceUsd: number | null; priceChange24hPct: number | null; ageDays: number | null }
@@ -19,12 +21,12 @@ interface ScanResult { tokenSymbol: string | null; tokenName: string | null; tok
 interface AlertEvent { tokenSymbol: string | null; type: string; firedAt: number; ruleText: string; acknowledgedAt: number | null }
 
 async function get<T>(path: string): Promise<Envelope<T>> {
-  const res = await fetch(`${API}${path}`, { headers: { accept: 'application/json' } });
+  const res = await fetch(`${API}${path}`, { headers: { accept: 'application/json', ...AUTH } });
   if (!res.ok) throw new Error(`API ${res.status} sur ${path} : la plateforme tourne-t-elle (${API}) ?`);
   return (await res.json()) as Envelope<T>;
 }
 async function getText(path: string): Promise<string> {
-  const res = await fetch(`${API}${path}`, { headers: { accept: 'text/markdown' } });
+  const res = await fetch(`${API}${path}`, { headers: { accept: 'text/markdown', ...AUTH } });
   if (!res.ok) throw new Error(`API ${res.status} sur ${path}`);
   return res.text();
 }

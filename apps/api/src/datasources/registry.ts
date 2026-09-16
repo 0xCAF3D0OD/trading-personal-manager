@@ -105,6 +105,6 @@ export class DataSourceRegistry {
       B: 'Palier B — Helius (recommandé)',
       C: 'Palier C — Helius/RPC + Solscan en repli',
     };
-    return { tier: this.tier, tierLabel: labels[this.tier], sources: this.health.snapshot(), capabilities: this.capabilities() };
+    return { tier: this.tier, tierLabel: labels[this.tier], sources: this.health.snapshot(), capabilities: this.capabilities(), exposure: { host: this.env.HOST, authEnabled: !!(this.env.APP_AUTH_USER && this.env.APP_AUTH_PASSWORD), corsOrigin: this.env.CORS_ORIGIN ?? null } };
   }
 }

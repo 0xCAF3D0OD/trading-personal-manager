@@ -22,6 +22,10 @@ async function runJob(name: 'market-snapshot' | 'holder-snapshot') {
     <template v-if="sources.data.value">
       <section class="card">
         <div class="card-head"><h2>Sources de données</h2><span class="badge neutral">{{ sources.data.value.data.tierLabel }}</span></div>
+        <div v-if="!sources.data.value.data.exposure.authEnabled" class="banner warn small">
+          <strong>API sans mot de passe</strong> (écoute sur <code>{{ sources.data.value.data.exposure.host }}</code>). Sur votre machine, aucun souci. N’exposez jamais ce port à Internet tel quel : l’application lit vos soldes Kraken. Pour un accès distant, renseignez <code>APP_AUTH_USER</code> et <code>APP_AUTH_PASSWORD</code> dans le <code>.env</code> (README, « Sécurité et exposition »).
+        </div>
+        <p v-else class="small muted">Authentification basique active sur l’API (compte <code>{{ '\u2022\u2022\u2022' }}</code>).</p>
         <div class="overflow">
           <table>
             <thead><tr><th>Fournisseur</th><th>Configuré</th><th>État</th><th>Dernier succès</th><th>Dernière erreur</th></tr></thead>
